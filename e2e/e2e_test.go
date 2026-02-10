@@ -2,7 +2,6 @@ package e2e_test
 
 import (
 	"testing"
-	"time"
 )
 
 const (
@@ -10,15 +9,14 @@ const (
 	expectedHail    = 3
 	expectedTornado = 3
 	expectedWind    = 3
-	healthTimeout   = 60 * time.Second
 )
 
 const wideTimeRange = `timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" }`
 
 func TestServicesHealthy(t *testing.T) {
-	waitForHealthy(t, "api", apiURL(), healthTimeout)
-	waitForHealthy(t, "collector", collectorURL(), healthTimeout)
-	waitForHealthy(t, "etl", etlURL(), healthTimeout)
+	waitForHealthy(t, "api", apiURL())
+	waitForHealthy(t, "collector", collectorURL())
+	waitForHealthy(t, "etl", etlURL())
 }
 
 func TestDataPropagation(t *testing.T) {

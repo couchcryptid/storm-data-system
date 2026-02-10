@@ -155,6 +155,7 @@ Best for low-to-moderate traffic. Pay-per-use, scales to zero, minimal operation
 | **Total**              |                                |                               | **$72--172** |
 
 **Notes**:
+
 - Cloud Run bills per 100ms of CPU time. The collector runs once daily (seconds of compute). The ETL and API are lightweight.
 - Confluent Cloud Basic tier is the largest cost. Self-managed Kafka on a small GKE node ($25--50/month) would save money but add operational burden.
 - Cloud SQL db-f1-micro (0.6GB RAM, shared vCPU) is sufficient for this data volume. Upgrade to db-custom-1-3840 (~$30/month) if query latency matters.
@@ -173,6 +174,7 @@ Better for teams already on Kubernetes. More control, but higher base cost.
 | **Total**              |                                |                               | **$104--157** |
 
 **Notes**:
+
 - GKE Autopilot charges $0.0445/vCPU-hour and $0.0049225/GB-hour for pod resources.
 - Self-managing Kafka on GKE eliminates the Confluent Cloud cost but requires monitoring ZooKeeper/KRaft, brokers, and disk.
 - Better suited if you plan to add more services or need fine-grained resource control.
@@ -192,6 +194,7 @@ Lowest cost and operational burden. Replaces Kafka with GCP-native messaging.
 | **Total**              |                                |                               | **$22--62**  |
 
 **Notes**:
+
 - Cloud Pub/Sub's free tier covers 10GB/month of messaging. Storm data is well under this.
 - Requires refactoring the Kafka producers/consumers to use Pub/Sub client libraries. The hexagonal architecture in the ETL makes this straightforward (swap the Kafka adapter for a Pub/Sub adapter).
 - Loses Kafka features: consumer groups with partition assignment, exactly-once semantics, log compaction, replay from offset.

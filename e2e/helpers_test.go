@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,12 +16,12 @@ import (
 // dataReady gates all data-dependent tests. It polls the GraphQL API once
 // (via sync.Once) and fails the calling test if data never appears.
 var dataReady sync.Once
-var dataReadyErr error
+var errDataReady error
 
 func ensureDataPropagated(t *testing.T) {
 	t.Helper()
 	dataReady.Do(func() {
-		waitForHealthy(t, "api", apiURL(), 60*time.Second)
+		waitForHealthy(t, "api", apiURL())
 
 		query := `{ stormReports(filter: { timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" } }) { totalCount } }`
 		deadline := time.Now().Add(120 * time.Second)
@@ -35,10 +36,10 @@ func ensureDataPropagated(t *testing.T) {
 			t.Logf("waiting for data propagation: %d/9 records", lastCount)
 			time.Sleep(5 * time.Second)
 		}
-		dataReadyErr = fmt.Errorf("data did not propagate: got %d/9 records", lastCount)
+		errDataReady = fmt.Errorf("data did not propagate: got %d/9 records", lastCount)
 	})
-	if dataReadyErr != nil {
-		t.Fatal(dataReadyErr)
+	if errDataReady != nil {
+		t.Fatal(errDataReady)
 	}
 }
 
@@ -65,13 +66,20 @@ func etlURL() string {
 }
 
 // waitForHealthy polls a /healthz endpoint until it returns 200 or the timeout expires.
-func waitForHealthy(t *testing.T, name, url string, timeout time.Duration) {
+func waitForHealthy(t *testing.T, name, baseURL string) {
 	t.Helper()
-	deadline := time.Now().Add(timeout)
-	endpoint := url + "/healthz"
+	deadline := time.Now().Add(60 * time.Second)
+	endpoint := baseURL + "/healthz"
 
 	for time.Now().Before(deadline) {
-		resp, err := http.Get(endpoint)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+		if err != nil {
+			cancel()
+			t.Fatalf("creating health request: %v", err)
+		}
+		resp, err := http.DefaultClient.Do(req)
+		cancel()
 		if err == nil {
 			resp.Body.Close()
 			if resp.StatusCode == http.StatusOK {
@@ -81,27 +89,7 @@ func waitForHealthy(t *testing.T, name, url string, timeout time.Duration) {
 		}
 		time.Sleep(2 * time.Second)
 	}
-	t.Fatalf("%s did not become healthy within %s (endpoint: %s)", name, timeout, endpoint)
-}
-
-// waitForReady polls a /readyz endpoint until it returns 200 or the timeout expires.
-func waitForReady(t *testing.T, name, url string, timeout time.Duration) {
-	t.Helper()
-	deadline := time.Now().Add(timeout)
-	endpoint := url + "/readyz"
-
-	for time.Now().Before(deadline) {
-		resp, err := http.Get(endpoint)
-		if err == nil {
-			resp.Body.Close()
-			if resp.StatusCode == http.StatusOK {
-				t.Logf("%s is ready", name)
-				return
-			}
-		}
-		time.Sleep(2 * time.Second)
-	}
-	t.Fatalf("%s did not become ready within %s (endpoint: %s)", name, timeout, endpoint)
+	t.Fatalf("%s did not become healthy within 60s (endpoint: %s)", name, endpoint)
 }
 
 // graphQLQuery executes a GraphQL query against the API and returns the parsed response.
@@ -109,11 +97,16 @@ func graphQLQuery(t *testing.T, query string) graphQLResponse {
 	t.Helper()
 
 	payload := fmt.Sprintf(`{"query":%q}`, query)
-	resp, err := http.Post(
-		apiURL()+"/query",
-		"application/json",
-		strings.NewReader(payload),
-	)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL()+"/query", strings.NewReader(payload))
+	if err != nil {
+		t.Fatalf("creating GraphQL request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("GraphQL request failed: %v", err)
 	}
@@ -182,11 +175,11 @@ type stormReportsData struct {
 }
 
 type stormReportsResult struct {
-	TotalCount   int               `json:"totalCount"`
-	HasMore      bool              `json:"hasMore"`
-	Reports      []stormReport     `json:"reports"`
+	TotalCount   int                `json:"totalCount"`
+	HasMore      bool               `json:"hasMore"`
+	Reports      []stormReport      `json:"reports"`
 	Aggregations *stormAggregations `json:"aggregations"`
-	Meta         *queryMeta        `json:"meta"`
+	Meta         *queryMeta         `json:"meta"`
 }
 
 type stormAggregations struct {

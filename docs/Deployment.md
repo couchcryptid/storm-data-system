@@ -3,6 +3,7 @@
 How to run the complete storm data stack. The unified Docker Compose in this repository brings up all three services, Kafka, PostgreSQL, and a mock NOAA server for testing.
 
 For per-service Docker details, see each service's wiki:
+
 - [Collector Deployment](https://github.com/couchcryptid/storm-data-collector/wiki/Deployment)
 - [ETL Deployment](https://github.com/couchcryptid/storm-data-etl-service/wiki/Deployment)
 - [API Deployment](https://github.com/couchcryptid/storm-data-graphql-api/wiki/Deployment)

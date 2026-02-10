@@ -3,6 +3,7 @@
 Consolidated configuration reference for the entire storm data stack. Each service is configured via environment variables with sensible defaults for local development. The unified Docker Compose stack in this repository wires all services together with the correct inter-container addresses.
 
 For service-specific configuration details, see each service's wiki:
+
 - [Collector Configuration](https://github.com/couchcryptid/storm-data-collector/wiki/Configuration)
 - [ETL Configuration](https://github.com/couchcryptid/storm-data-etl-service/wiki/Configuration)
 - [API Configuration](https://github.com/couchcryptid/storm-data-graphql-api/wiki/Configuration)

@@ -1,0 +1,54 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        exclude: '^compose\.ci\.yml$'
+      - id: check-json
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.47.0
+    hooks:
+      - id: markdownlint
+
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: gofmt
+        entry: gofmt -w
+        language: system
+        types: [go]
+      - id: goimports
+        name: goimports
+        entry: bash -c '"$(go env GOPATH)"/bin/goimports -w "$@"' --
+        language: system
+        types: [go]
+      - id: golangci-lint-e2e
+        name: golangci-lint (e2e)
+        entry: bash -c 'cd e2e && golangci-lint run --timeout=5m ./...'
+        language: system
+        files: '^e2e/'
+        types: [go]
+        pass_filenames: false
+      - id: golangci-lint-mock-server
+        name: golangci-lint (mock-server)
+        entry: bash -c 'cd mock-server && golangci-lint run --timeout=5m ./...'
+        language: system
+        files: '^mock-server/'
+        types: [go]
+        pass_filenames: false
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks

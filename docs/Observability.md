@@ -3,6 +3,7 @@
 Unified view of health checks, Prometheus metrics, and structured logging across all storm data services. Each service exposes the same operational endpoints and follows consistent patterns for metrics and logging.
 
 For service-specific observability details:
+
 - [Collector Metrics](https://github.com/couchcryptid/storm-data-collector/wiki/Metrics) and [Logging](https://github.com/couchcryptid/storm-data-collector/wiki/Logging)
 - [ETL Performance](https://github.com/couchcryptid/storm-data-etl-service/wiki/Performance) (includes monitoring queries)
 - [API Performance](https://github.com/couchcryptid/storm-data-graphql-api/wiki/Performance) (includes monitoring queries)

@@ -37,7 +37,7 @@ npm run test:unit
 ### ETL (Go)
 
 ```sh
-cd storm-data-etl-service
+cd storm-data-etl
 make test-unit    # go test ./... -count=1 -race
 ```
 
@@ -49,7 +49,7 @@ make test-unit    # go test ./... -count=1 -race
 ### API (Go)
 
 ```sh
-cd storm-data-graphql-api
+cd storm-data-api
 make test-unit    # go test ./internal/... -count=1 -race
 ```
 
@@ -76,7 +76,7 @@ npm run test:integration
 ### ETL
 
 ```sh
-cd storm-data-etl-service
+cd storm-data-etl
 make test-integration    # go test -tags=integration ./internal/integration/...
 ```
 
@@ -87,7 +87,7 @@ make test-integration    # go test -tags=integration ./internal/integration/...
 ### API
 
 ```sh
-cd storm-data-graphql-api
+cd storm-data-api
 make test-integration    # go test -tags=integration ./internal/integration/...
 ```
 

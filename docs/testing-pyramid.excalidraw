@@ -803,13 +803,13 @@
       "updated": 1,
       "link": null,
       "locked": false,
-      "text": "storm-data-etl-service",
+      "text": "storm-data-etl",
       "fontSize": 9,
       "fontFamily": 1,
       "textAlign": "left",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "storm-data-etl-service",
+      "originalText": "storm-data-etl",
       "lineHeight": 1.25
     },
     {
@@ -865,13 +865,13 @@
       "updated": 1,
       "link": null,
       "locked": false,
-      "text": "storm-data-graphql-api",
+      "text": "storm-data-api",
       "fontSize": 9,
       "fontFamily": 1,
       "textAlign": "left",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "storm-data-graphql-api",
+      "originalText": "storm-data-api",
       "lineHeight": 1.25
     },
     {

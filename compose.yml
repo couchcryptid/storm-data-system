@@ -90,7 +90,7 @@ services:
 
   etl:
     build:
-      context: ../storm-data-etl-service
+      context: ../storm-data-etl
     container_name: storm-data-etl
     ports:
       - "8081:8080"
@@ -122,15 +122,15 @@ services:
 
   api:
     build:
-      context: ../storm-data-graphql-api
-    container_name: storm-data-graphql-api
+      context: ../storm-data-api
+    container_name: storm-data-api
     ports:
       - "8080:8080"
     environment:
       DATABASE_URL: postgres://storm:storm@postgres:5432/stormdata?sslmode=disable
       KAFKA_BROKERS: kafka:9092
       KAFKA_TOPIC: transformed-weather-data
-      KAFKA_GROUP_ID: storm-data-graphql-api
+      KAFKA_GROUP_ID: storm-data-api
       LOG_LEVEL: info
       LOG_FORMAT: json
     depends_on:

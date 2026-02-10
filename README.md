@@ -34,8 +34,8 @@ E2E tests query the GraphQL API to verify that data flows correctly through the 
 ```
 ~/Projects/hailtrace/
   storm-data-collector/
-  storm-data-etl-service/
-  storm-data-graphql-api/
+  storm-data-etl/
+  storm-data-api/
   storm-data-system/          <-- this repo
 ```
 
@@ -69,8 +69,8 @@ make clean           # Stop containers + remove volumes
 | `postgres`     | `postgres:16`                | 5432      | 5432          | `pg_isready` |
 | `mock-server`  | `./mock-server`              | 8090      | 8080          | `/healthz`   |
 | `collector`    | `../storm-data-collector`    | 3000      | 3000          | `/healthz`   |
-| `etl`          | `../storm-data-etl-service`  | 8081      | 8080          | `/healthz`   |
-| `api`          | `../storm-data-graphql-api`  | 8080      | 8080          | `/healthz`   |
+| `etl`          | `../storm-data-etl`  | 8081      | 8080          | `/healthz`   |
+| `api`          | `../storm-data-api`  | 8080      | 8080          | `/healthz`   |
 
 ## Kafka Topics
 
@@ -149,7 +149,7 @@ cd e2e && go test -v -count=1 -timeout 5m ./...
 docker compose -f compose.yml -f compose.ci.yml down -v
 ```
 
-The `compose.ci.yml` override replaces `build:` directives with `image:` references to `ghcr.io/couchcryptid/storm-data-*:latest`.
+The `compose.ci.yml` override replaces `build:` directives with `image:` references to `couchcryptid/storm-data-*:latest` on Docker Hub.
 
 ## Project Structure
 

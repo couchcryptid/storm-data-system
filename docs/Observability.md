@@ -5,8 +5,8 @@ Unified view of health checks, Prometheus metrics, and structured logging across
 For service-specific observability details:
 
 - [Collector Metrics](https://github.com/couchcryptid/storm-data-collector/wiki/Metrics) and [Logging](https://github.com/couchcryptid/storm-data-collector/wiki/Logging)
-- [ETL Performance](https://github.com/couchcryptid/storm-data-etl-service/wiki/Performance) (includes monitoring queries)
-- [API Performance](https://github.com/couchcryptid/storm-data-graphql-api/wiki/Performance) (includes monitoring queries)
+- [ETL Performance](https://github.com/couchcryptid/storm-data-etl/wiki/Performance) (includes monitoring queries)
+- [API Performance](https://github.com/couchcryptid/storm-data-api/wiki/Performance) (includes monitoring queries)
 
 ## Health Endpoints
 
@@ -53,7 +53,7 @@ In the unified Docker Compose stack, readiness determines whether dependent serv
 
 Also includes default Node.js runtime metrics (`nodejs_*`, `process_*`).
 
-### ETL (`etl_*`)
+### ETL (`storm_etl_*`)
 
 **Package**: prometheus/client_golang
 
@@ -61,22 +61,22 @@ Also includes default Node.js runtime metrics (`nodejs_*`, `process_*`).
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `etl_messages_consumed_total` | Counter | `topic` | Messages consumed from source topic |
-| `etl_messages_produced_total` | Counter | `topic` | Messages produced to sink topic |
-| `etl_transform_errors_total` | Counter | `error_type` | Transform failures |
-| `etl_processing_duration_seconds` | Histogram | -- | Per-message processing time (1ms--5s buckets) |
-| `etl_pipeline_running` | Gauge | -- | 1 when pipeline loop is active |
+| `storm_etl_messages_consumed_total` | Counter | `topic` | Messages consumed from source topic |
+| `storm_etl_messages_produced_total` | Counter | `topic` | Messages produced to sink topic |
+| `storm_etl_transform_errors_total` | Counter | `error_type` | Transform failures |
+| `storm_etl_processing_duration_seconds` | Histogram | -- | Per-message processing time (1ms--5s buckets) |
+| `storm_etl_pipeline_running` | Gauge | -- | 1 when pipeline loop is active |
 
 #### Geocoding Metrics (when enabled)
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `etl_geocode_enabled` | Gauge | -- | 1 if geocoding feature is active |
-| `etl_geocode_requests_total` | Counter | `method`, `outcome` | API requests by method (forward/reverse) and outcome |
-| `etl_geocode_api_duration_seconds` | Histogram | `method` | Mapbox API latency (10ms--5s buckets) |
-| `etl_geocode_cache_total` | Counter | `method`, `result` | Cache hits/misses |
+| `storm_etl_geocode_enabled` | Gauge | -- | 1 if geocoding feature is active |
+| `storm_etl_geocode_requests_total` | Counter | `method`, `outcome` | API requests by method (forward/reverse) and outcome |
+| `storm_etl_geocode_api_duration_seconds` | Histogram | `method` | Mapbox API latency (10ms--5s buckets) |
+| `storm_etl_geocode_cache_total` | Counter | `method`, `result` | Cache hits/misses |
 
-### API (`api_*`)
+### API (`storm_api_*`)
 
 **Package**: prometheus/client_golang
 
@@ -84,23 +84,23 @@ Also includes default Node.js runtime metrics (`nodejs_*`, `process_*`).
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `api_http_requests_total` | Counter | `method`, `path`, `status` | Total HTTP requests |
-| `api_http_request_duration_seconds` | Histogram | `method`, `path` | Request duration (1ms--5s buckets) |
+| `storm_api_http_requests_total` | Counter | `method`, `path`, `status` | Total HTTP requests |
+| `storm_api_http_request_duration_seconds` | Histogram | `method`, `path` | Request duration (1ms--5s buckets) |
 
 #### Kafka Consumer Metrics
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `api_kafka_messages_consumed_total` | Counter | `topic` | Messages consumed |
-| `api_kafka_consumer_errors_total` | Counter | `topic`, `error_type` | Consumer errors |
-| `api_kafka_consumer_running` | Gauge | `topic` | 1 when consumer is active |
+| `storm_api_kafka_messages_consumed_total` | Counter | `topic` | Messages consumed |
+| `storm_api_kafka_consumer_errors_total` | Counter | `topic`, `error_type` | Consumer errors |
+| `storm_api_kafka_consumer_running` | Gauge | `topic` | 1 when consumer is active |
 
 #### Database Metrics
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `api_db_query_duration_seconds` | Histogram | `operation` | Query duration |
-| `api_db_pool_connections` | Gauge | `state` | Connection pool stats |
+| `storm_api_db_query_duration_seconds` | Histogram | `operation` | Query duration |
+| `storm_api_db_pool_connections` | Gauge | `state` | Connection pool stats |
 
 ## Prometheus Scrape Configuration
 
@@ -133,36 +133,36 @@ The collector uses a 60-second interval because it only runs once daily. The ETL
 up{job=~"storm-.*"}
 
 # Pipeline throughput (messages/second)
-rate(etl_messages_consumed_total[1m])
+rate(storm_etl_messages_consumed_total[1m])
 
 # API request rate
-rate(api_http_requests_total[1m])
+rate(storm_api_http_requests_total[1m])
 
 # Data lag (via GraphQL dataLagMinutes field, or approximate via metrics)
-time() - api_kafka_messages_consumed_total
+time() - storm_api_kafka_messages_consumed_total
 ```
 
 ### Latency
 
 ```promql
 # ETL per-message processing (p99)
-histogram_quantile(0.99, rate(etl_processing_duration_seconds_bucket[5m]))
+histogram_quantile(0.99, rate(storm_etl_processing_duration_seconds_bucket[5m]))
 
 # API HTTP request latency (p99)
-histogram_quantile(0.99, rate(api_http_request_duration_seconds_bucket[5m]))
+histogram_quantile(0.99, rate(storm_api_http_request_duration_seconds_bucket[5m]))
 
 # API database query latency (p99)
-histogram_quantile(0.99, rate(api_db_query_duration_seconds_bucket[5m]))
+histogram_quantile(0.99, rate(storm_api_db_query_duration_seconds_bucket[5m]))
 ```
 
 ### Error Rates
 
 ```promql
 # ETL transform error rate
-rate(etl_transform_errors_total[5m]) / rate(etl_messages_consumed_total[5m])
+rate(storm_etl_transform_errors_total[5m]) / rate(storm_etl_messages_consumed_total[5m])
 
 # API Kafka consumer error rate
-rate(api_kafka_consumer_errors_total[5m])
+rate(storm_api_kafka_consumer_errors_total[5m])
 
 # Collector job failure rate
 rate(storm_collector_job_runs_total{status="failure"}[1h])
@@ -172,11 +172,11 @@ rate(storm_collector_job_runs_total{status="failure"}[1h])
 
 ```promql
 # API database connection pool utilization
-api_db_pool_connections{state="active"} / api_db_pool_connections{state="total"}
+storm_api_db_pool_connections{state="active"} / storm_api_db_pool_connections{state="total"}
 
 # Geocoding cache hit rate (ETL)
-rate(etl_geocode_cache_total{result="hit"}[5m])
-  / rate(etl_geocode_cache_total[5m])
+rate(storm_etl_geocode_cache_total{result="hit"}[5m])
+  / rate(storm_etl_geocode_cache_total[5m])
 ```
 
 ## Structured Logging

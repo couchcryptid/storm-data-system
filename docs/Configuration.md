@@ -5,8 +5,8 @@ Consolidated configuration reference for the entire storm data stack. Each servi
 For service-specific configuration details, see each service's wiki:
 
 - [Collector Configuration](https://github.com/couchcryptid/storm-data-collector/wiki/Configuration)
-- [ETL Configuration](https://github.com/couchcryptid/storm-data-etl-service/wiki/Configuration)
-- [API Configuration](https://github.com/couchcryptid/storm-data-graphql-api/wiki/Configuration)
+- [ETL Configuration](https://github.com/couchcryptid/storm-data-etl/wiki/Configuration)
+- [API Configuration](https://github.com/couchcryptid/storm-data-api/wiki/Configuration)
 
 ## Collector (TypeScript)
 
@@ -54,7 +54,7 @@ Configuration is loaded in `internal/config/config.go` and returns `(*Config, er
 | `DATABASE_URL` | `postgres://storm:storm@localhost:5432/stormdata?sslmode=disable` | PostgreSQL connection string |
 | `KAFKA_BROKERS` | `localhost:29092` | Kafka broker addresses |
 | `KAFKA_TOPIC` | `transformed-weather-data` | Topic to consume enriched events from |
-| `KAFKA_GROUP_ID` | `storm-data-graphql-api` | Consumer group ID |
+| `KAFKA_GROUP_ID` | `storm-data-api` | Consumer group ID |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
 | `LOG_FORMAT` | `json` | `json` or `text` |
 | `SHUTDOWN_TIMEOUT` | `10s` | Graceful shutdown deadline |

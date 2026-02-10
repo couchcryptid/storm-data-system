@@ -25,8 +25,8 @@ Three services, two Kafka topics, one database. Data flows left to right.
 | Repository | Language | Description |
 |------------|----------|-------------|
 | [storm-data-collector](https://github.com/couchcryptid/storm-data-collector) | TypeScript | Fetches NOAA CSVs, publishes raw JSON to Kafka |
-| [storm-data-etl-service](https://github.com/couchcryptid/storm-data-etl-service) | Go | Enriches raw events (severity, location, time bucketing) |
-| [storm-data-graphql-api](https://github.com/couchcryptid/storm-data-graphql-api) | Go | Persists to PostgreSQL, serves GraphQL API |
+| [storm-data-etl](https://github.com/couchcryptid/storm-data-etl) | Go | Enriches raw events (severity, location, time bucketing) |
+| [storm-data-api](https://github.com/couchcryptid/storm-data-api) | Go | Persists to PostgreSQL, serves GraphQL API |
 | [storm-data-system](https://github.com/couchcryptid/storm-data-system) | Go | Unified stack, E2E tests, system documentation |
 
 Each service has its own wiki with implementation-level detail. This wiki covers the system as a whole.

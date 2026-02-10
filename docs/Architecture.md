@@ -84,8 +84,6 @@ For the complete data model and message shapes at each stage, see [[Data Model]]
 
 ### Near-term
 
-**Dead letter queue** -- Route failed messages to a DLQ topic instead of silently skipping them. The collector already has DLQ configuration fields (`KAFKA_DLQ_TOPIC`, `DLQ_ENABLED`). Extend this pattern to the ETL and API consumers. A DLQ consumer or dashboard would enable monitoring and replay of failed messages.
-
 **Schema registry** -- Introduce Avro or Protobuf schemas with a Confluent Schema Registry (or Buf). Currently the Kafka message format is an implicit JSON contract. A schema registry would catch breaking changes at publish time rather than at consumer parse time.
 
 **OpenTelemetry tracing** -- Add distributed tracing across all three services. Each Kafka message would carry a trace context header, enabling end-to-end latency visualization. GCP Cloud Trace provides a managed backend.

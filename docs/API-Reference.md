@@ -1,8 +1,8 @@
 # API Reference
 
-The GraphQL API is served by the `storm-data-graphql-api` service at `POST /query`. This page documents the public query interface from the perspective of a client consuming the storm data system.
+The GraphQL API is served by the `storm-data-api` service at `POST /query`. This page documents the public query interface from the perspective of a client consuming the storm data system.
 
-For implementation details, see the [API service wiki](https://github.com/couchcryptid/storm-data-graphql-api/wiki/API-Reference).
+For implementation details, see the [API service wiki](https://github.com/couchcryptid/storm-data-api/wiki/API-Reference).
 
 ## Query
 
@@ -28,8 +28,7 @@ query {
       comments
       beginTime
       sourceOffice
-      formattedAddress
-      geoSource
+      geocoding { formattedAddress placeName confidence source }
     }
     aggregations {
       byEventType { eventType count maxMeasurement { magnitude unit } }
@@ -89,10 +88,7 @@ The top-level result returned by `stormReports`.
 | `comments` | `String!` | Free-text event description |
 | `timeBucket` | `DateTime!` | Hourly time bucket for aggregation |
 | `processedAt` | `DateTime!` | When the record was processed |
-| `formattedAddress` | `String!` | Geocoded street address (empty if geocoding disabled) |
-| `placeName` | `String!` | Geocoded place name (empty if geocoding disabled) |
-| `geoConfidence` | `Float!` | Geocoding confidence score (0 if geocoding disabled) |
-| `geoSource` | `String!` | Geocoding source (empty if geocoding disabled) |
+| `geocoding` | `Geocoding!` | Geocoding enrichment results (empty when geocoding disabled) |
 
 ### Measurement
 
@@ -119,6 +115,15 @@ The top-level result returned by `stormReports`.
 | `direction` | `String` | Cardinal direction (nullable) |
 | `state` | `String!` | Two-letter state code |
 | `county` | `String!` | County name |
+
+### Geocoding
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `formattedAddress` | `String!` | Full address from geocoding (empty if geocoding disabled) |
+| `placeName` | `String!` | Short place name from geocoding (empty if geocoding disabled) |
+| `confidence` | `Float!` | Geocoding confidence score 0-1 (0 if geocoding disabled) |
+| `source` | `String!` | Geocoding method: `forward`, `reverse`, `original`, `failed`, or empty |
 
 ## Aggregation Types
 

@@ -47,7 +47,7 @@ The Kafka message timestamp is set to the fetch time, which the ETL uses as the 
 
 ## Stage 2: Transformation (ETL)
 
-The **ETL** (Go) consumes from `raw-weather-reports`, applies an 11-step enrichment pipeline, and produces to `transformed-weather-data`. See the [ETL Enrichment wiki](https://github.com/couchcryptid/storm-data-etl-service/wiki/Enrichment) for the complete rule set.
+The **ETL** (Go) consumes from `raw-weather-reports`, applies an 11-step enrichment pipeline, and produces to `transformed-weather-data`. See the [ETL Enrichment wiki](https://github.com/couchcryptid/storm-data-etl/wiki/Enrichment) for the complete rule set.
 
 **Enrichment steps** (in order):
 
@@ -70,8 +70,11 @@ The **ETL** (Go) consumes from `raw-weather-reports`, applies an 11-step enrichm
   "id": "a3f8b2c1e7d9...",
   "type": "hail",
   "geo": { "lat": 31.02, "lon": -98.44 },
-  "magnitude": 1.25,
-  "unit": "in",
+  "measurement": {
+    "magnitude": 1.25,
+    "unit": "in",
+    "severity": "moderate"
+  },
   "begin_time": "2026-01-01T15:10:00Z",
   "end_time": "2026-01-01T15:10:00Z",
   "source": "spc",
@@ -84,18 +87,19 @@ The **ETL** (Go) consumes from `raw-weather-reports`, applies an 11-step enrichm
     "county": "San Saba"
   },
   "comments": "1.25 inch hail reported at Colorado Bend State Park. (SJT)",
-  "severity": "moderate",
   "source_office": "SJT",
   "time_bucket": "2026-01-01T15:00:00Z",
   "processed_at": "2026-01-01T22:00:00Z",
-  "formatted_address": "",
-  "place_name": "",
-  "geo_confidence": 0,
-  "geo_source": ""
+  "geocoding": {
+    "formatted_address": "",
+    "place_name": "",
+    "confidence": 0,
+    "source": ""
+  }
 }
 ```
 
-When geocoding is enabled, the ETL populates `formatted_address`, `place_name`, `geo_confidence`, and `geo_source` with Mapbox results. When disabled, these fields are empty/zero.
+When geocoding is enabled, the ETL populates `geocoding.formatted_address`, `geocoding.place_name`, `geocoding.confidence`, and `geocoding.source` with Mapbox results. When disabled, the `geocoding` object is omitted (all fields are zero-valued with `omitempty`).
 
 **Kafka headers**: `type` (event type) and `processed_at` (RFC 3339 timestamp).
 

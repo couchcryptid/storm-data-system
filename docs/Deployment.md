@@ -5,8 +5,8 @@ How to run the complete storm data stack. The unified Docker Compose in this rep
 For per-service Docker details, see each service's wiki:
 
 - [Collector Deployment](https://github.com/couchcryptid/storm-data-collector/wiki/Deployment)
-- [ETL Deployment](https://github.com/couchcryptid/storm-data-etl-service/wiki/Deployment)
-- [API Deployment](https://github.com/couchcryptid/storm-data-graphql-api/wiki/Deployment)
+- [ETL Deployment](https://github.com/couchcryptid/storm-data-etl/wiki/Deployment)
+- [API Deployment](https://github.com/couchcryptid/storm-data-api/wiki/Deployment)
 
 ## Local Development (Build from Source)
 
@@ -24,8 +24,8 @@ make up
 ```
 ~/Projects/hailtrace/
   storm-data-collector/
-  storm-data-etl-service/
-  storm-data-graphql-api/
+  storm-data-etl/
+  storm-data-api/
   storm-data-system/          <-- this repo
 ```
 
@@ -37,8 +37,8 @@ make up
 | `postgres` | `postgres:16` | 5432 | 5432 | `pg_isready` |
 | `mock-server` | `./mock-server` | 8090 | 8080 | `/healthz` |
 | `collector` | `../storm-data-collector` | 3000 | 3000 | `/healthz` |
-| `etl` | `../storm-data-etl-service` | 8081 | 8080 | `/healthz` |
-| `api` | `../storm-data-graphql-api` | 8080 | 8080 | `/healthz` |
+| `etl` | `../storm-data-etl` | 8081 | 8080 | `/healthz` |
+| `api` | `../storm-data-api` | 8080 | 8080 | `/healthz` |
 
 ### Startup Order
 
@@ -79,7 +79,7 @@ make logs-api        # Tail API logs
 
 ## CI (Published Images)
 
-For CI environments where service images are published to GitHub Container Registry:
+For CI environments where service images are published to Docker Hub:
 
 ```sh
 make up-ci
@@ -90,11 +90,11 @@ This uses `compose.ci.yml` to override `build:` directives with `image:` referen
 ```yaml
 services:
   collector:
-    image: ghcr.io/couchcryptid/storm-data-collector:latest
+    image: couchcryptid/storm-data-collector:latest
   etl:
-    image: ghcr.io/couchcryptid/storm-data-etl-service:latest
+    image: couchcryptid/storm-data-etl:latest
   api:
-    image: ghcr.io/couchcryptid/storm-data-graphql-api:latest
+    image: couchcryptid/storm-data-api:latest
 ```
 
 ### CI Workflow

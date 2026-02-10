@@ -5,8 +5,8 @@ Multi-repo development workflow for the storm data pipeline. Each service is an 
 For service-specific development guides:
 
 - [Collector Development](https://github.com/couchcryptid/storm-data-collector/wiki/Development)
-- [ETL Development](https://github.com/couchcryptid/storm-data-etl-service/wiki/Development)
-- [API Development](https://github.com/couchcryptid/storm-data-graphql-api/wiki/Development)
+- [ETL Development](https://github.com/couchcryptid/storm-data-etl/wiki/Development)
+- [API Development](https://github.com/couchcryptid/storm-data-api/wiki/Development)
 
 ## Prerequisites
 
@@ -24,8 +24,8 @@ For service-specific development guides:
 ```
 ~/Projects/hailtrace/
   storm-data-collector/       # TypeScript, KafkaJS, Vitest
-  storm-data-etl-service/     # Go, hexagonal architecture, kafka-go
-  storm-data-graphql-api/     # Go, gqlgen, pgx, chi
+  storm-data-etl/     # Go, hexagonal architecture, kafka-go
+  storm-data-api/     # Go, gqlgen, pgx, chi
   storm-data-system/          # Unified stack, E2E tests, docs
 ```
 
@@ -42,12 +42,12 @@ cp .env.example .env
 docker compose up
 
 # ETL
-cd storm-data-etl-service
+cd storm-data-etl
 cp .env.example .env
 docker compose up --build
 
 # API
-cd storm-data-graphql-api
+cd storm-data-api
 make docker-up
 make run
 ```
@@ -94,8 +94,8 @@ All three services expose the same operational endpoints:
 | Service | Prefix | Examples |
 |---------|--------|----------|
 | Collector | `storm_collector_` | `storm_collector_job_runs_total` |
-| ETL | `etl_` | `etl_messages_consumed_total` |
-| API | `api_` | `api_http_requests_total` |
+| ETL | `storm_etl_` | `storm_etl_messages_consumed_total` |
+| API | `storm_api_` | `storm_api_http_requests_total` |
 
 ### Logging
 

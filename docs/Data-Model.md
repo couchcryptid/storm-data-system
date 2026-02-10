@@ -43,12 +43,13 @@ Severity is derived from event type and magnitude during ETL enrichment. A magni
 
 ## Raw Message Shape (Collector Output)
 
-Published to `raw-weather-reports`. One message per CSV row. Keys match CSV column headers.
+Published to `raw-weather-reports`. One message per CSV row. Keys match CSV column headers. The collector adds a `Type` field to identify the event type.
 
 ### Hail
 
 ```json
 {
+  "Type": "hail",
   "Time": "1510",
   "Size": "125",
   "Location": "8 ESE Chappel",
@@ -64,6 +65,7 @@ Published to `raw-weather-reports`. One message per CSV row. Keys match CSV colu
 
 ```json
 {
+  "Type": "tornado",
   "Time": "1223",
   "F_Scale": "UNK",
   "Location": "2 N Mcalester",
@@ -79,6 +81,7 @@ Published to `raw-weather-reports`. One message per CSV row. Keys match CSV colu
 
 ```json
 {
+  "Type": "wind",
   "Time": "1245",
   "Speed": "UNK",
   "Location": "Mcalester",

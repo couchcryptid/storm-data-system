@@ -1,0 +1,59 @@
+version: "2"
+linters:
+  enable:
+    - bodyclose
+    - errname
+    - exhaustive
+    - gocritic
+    - gocyclo
+    - gosec
+    - misspell
+    - noctx
+    - prealloc
+    - revive
+    - unconvert
+    - unparam
+  settings:
+    gocritic:
+      disabled-checks:
+        - hugeParam
+        - unnamedResult
+        - httpNoBody
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+    gocyclo:
+      min-complexity: 15
+    revive:
+      rules:
+        - name: var-naming
+        - name: blank-imports
+        - name: context-as-argument
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$

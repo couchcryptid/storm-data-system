@@ -1,0 +1,12 @@
+services:
+  collector:
+    build: !reset null
+    image: ghcr.io/couchcryptid/storm-data-collector:latest
+
+  etl:
+    build: !reset null
+    image: ghcr.io/couchcryptid/storm-data-etl-service:latest
+
+  api:
+    build: !reset null
+    image: ghcr.io/couchcryptid/storm-data-graphql-api:latest

@@ -42,15 +42,9 @@ make up
 
 ### Startup Order
 
-Docker Compose health checks enforce dependency ordering:
+![Startup Dependencies](startup-dependencies.excalidraw.svg)
 
-```
-kafka ─────────────> collector (waits for kafka + mock-server)
-  |                  etl (waits for kafka)
-  v
-postgres ──────────> api (waits for kafka + postgres)
-mock-server ───────> collector
-```
+Docker Compose health checks enforce dependency ordering:
 
 All services use `restart: unless-stopped`. The `--wait` flag in `make up` blocks until all health checks pass.
 

@@ -47,6 +47,8 @@ The Kafka message timestamp is set to the fetch time, which the ETL uses as the 
 
 ## Stage 2: Transformation (ETL)
 
+![Data Transformation Flow](data-transformation-flow.excalidraw.svg)
+
 The **ETL** (Go) consumes from `raw-weather-reports`, applies an 11-step enrichment pipeline, and produces to `transformed-weather-data`. See the [ETL Enrichment wiki](https://github.com/couchcryptid/storm-data-etl/wiki/Enrichment) for the complete rule set.
 
 **Enrichment steps** (in order):
@@ -133,6 +135,8 @@ See [[API Reference]] for the complete query interface, and [[Data Model]] for t
 Both topics use a single partition in the default configuration. For horizontal scaling, increase partition counts and deploy multiple consumer instances. See [[Architecture]] for scaling considerations.
 
 ## Delivery Guarantees
+
+![Idempotent Deduplication](idempotent-deduplication.excalidraw.svg)
 
 | Guarantee | Implementation |
 |-----------|----------------|

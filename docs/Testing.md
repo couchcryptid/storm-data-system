@@ -4,20 +4,7 @@ Testing strategy for the storm data pipeline. Tests are organized in three tiers
 
 ## Testing Pyramid
 
-```
-                    ┌─────────┐
-                    │   E2E   │  9 tests (this repo)
-                    │  Tests  │  Full pipeline with Docker Compose
-                    ├─────────┤
-                ┌───┤Integra- ├───┐
-                │   │  tion   │   │  Per-service with testcontainers
-                │   │  Tests  │   │
-                ├───┼─────────┼───┤
-            ┌───┤   │  Unit   │   ├───┐
-            │   │   │  Tests  │   │   │  Per-service, mocked deps
-            └───┴───┴─────────┴───┴───┘
-          Collector    ETL       API
-```
+![Testing Pyramid](testing-pyramid.excalidraw.svg)
 
 ## Unit Tests
 

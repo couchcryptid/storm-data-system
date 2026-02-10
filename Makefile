@@ -1,4 +1,4 @@
-.PHONY: up down logs test-e2e build clean ps wait-healthy
+.PHONY: up down logs test-e2e build clean ps wait-healthy docs-svg
 
 # --- Stack Management ---
 
@@ -48,6 +48,17 @@ wait-healthy: ## Wait for all services to be healthy
 	@docker compose ps --format json | grep -q '"Health":"healthy"' || \
 		(echo "Some services are not healthy. Run 'make ps' to check." && exit 1)
 	@echo "All services healthy."
+
+# --- Documentation ---
+
+docs-svg: ## Re-export .excalidraw files to SVG via kroki.io
+	@for f in docs/*.excalidraw; do \
+		echo "Exporting $$f → $${f}.svg"; \
+		curl -s -X POST https://kroki.io/excalidraw/svg \
+			-H "Content-Type: text/plain" \
+			-d @"$$f" -o "$${f}.svg"; \
+	done
+	@echo "Done. SVGs updated in docs/"
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \

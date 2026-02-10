@@ -4,28 +4,7 @@ System-level orchestration, end-to-end testing, and documentation for the storm 
 
 ## System at a Glance
 
-```
-NOAA (SPC)                                                          Clients
-    |                                                                  ^
-    v                                                                  |
-+------------+     +-----------+     +-----------+     +----------+    |
-| Collector  |---->|   Kafka   |---->|    ETL    |---->|   Kafka  |----+
-| (TypeScript)|    | (raw-     |     |   (Go)    |     | (trans-  |    |
-|            |     |  weather- |     |           |     |  formed- |    |
-+------------+     |  reports) |     +-----------+     |  weather |    |
-                   +-----------+                       |  -data)  |    |
-                                                       +----------+    |
-                                                            |          |
-                                                            v          |
-                                                       +----------+   |
-                                                       |   API    |---+
-                                                       |   (Go)   |
-                                                       | GraphQL  |
-                                                       +----+-----+
-                                                            |
-                                                            v
-                                                       PostgreSQL
-```
+![System Architecture](architecture.excalidraw.svg)
 
 Three services, two Kafka topics, one database. Data flows left to right.
 

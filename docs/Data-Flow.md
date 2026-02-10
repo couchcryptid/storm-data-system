@@ -4,18 +4,16 @@ End-to-end journey of a storm report from NOAA CSV to GraphQL response. Each sta
 
 ## Pipeline Overview
 
-```
-NOAA SPC Website          Collector             Kafka                ETL                Kafka               API              PostgreSQL
-(CSV files)            (TypeScript)       (raw-weather-        (Go, hexagonal)    (transformed-        (Go, gqlgen)
-                                            reports)                               weather-data)
-                                                                                                            |
-  Daily CSV ──────> Fetch + Parse ──────> Raw JSON ──────> Enrich + Normalize ──────> Enriched JSON ──────> Insert ──────> storm_reports
-                    (cron schedule)       (per row)        (severity, location,      (per event)          (ON CONFLICT      table
-                                                           time bucket, office)                            DO NOTHING)
-                                                                                                            |
-                                                                                                            v
-                                                                                                     GraphQL /query
-```
+![System Architecture](architecture.excalidraw.svg)
+
+**Data transformation at each stage:**
+
+| Stage | Input | Output | Key Operation |
+|-------|-------|--------|---------------|
+| Collection | NOAA CSV files | Raw JSON (per row) | Fetch + Parse (cron schedule) |
+| ETL | Raw JSON | Enriched JSON (per event) | Enrich + Normalize (severity, location, time bucket, office) |
+| Persistence | Enriched JSON | `storm_reports` table | `INSERT ... ON CONFLICT DO NOTHING` |
+| Query | GraphQL request | JSON response | `POST /query` |
 
 ## Stage 1: Collection
 

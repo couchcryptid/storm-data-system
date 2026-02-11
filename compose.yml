@@ -87,14 +87,7 @@ services:
     container_name: storm-data-collector
     ports:
       - "3000:3000"
-    environment:
-      KAFKA_BROKERS: kafka:9092
-      KAFKA_CLIENT_ID: storm-data-collector
-      KAFKA_TOPIC: raw-weather-reports
-      REPORTS_BASE_URL: http://mock-server:8080/
-      REPORT_TYPES: torn,hail,wind
-      CRON_SCHEDULE: "0 0 * * *"
-      LOG_LEVEL: info
+    env_file: .env.collector
     depends_on:
       kafka-init:
         condition: service_completed_successfully
@@ -114,15 +107,7 @@ services:
     container_name: storm-data-etl
     ports:
       - "8081:8080"
-    environment:
-      KAFKA_BROKERS: kafka:9092
-      KAFKA_SOURCE_TOPIC: raw-weather-reports
-      KAFKA_SINK_TOPIC: transformed-weather-data
-      KAFKA_GROUP_ID: storm-data-etl
-      HTTP_ADDR: ":8080"
-      LOG_LEVEL: info
-      LOG_FORMAT: json
-      SHUTDOWN_TIMEOUT: 10s
+    env_file: .env.etl
     depends_on:
       kafka-init:
         condition: service_completed_successfully
@@ -146,13 +131,7 @@ services:
     container_name: storm-data-api
     ports:
       - "8080:8080"
-    environment:
-      DATABASE_URL: postgres://storm:storm@postgres:5432/stormdata?sslmode=disable
-      KAFKA_BROKERS: kafka:9092
-      KAFKA_TOPIC: transformed-weather-data
-      KAFKA_GROUP_ID: storm-data-api
-      LOG_LEVEL: info
-      LOG_FORMAT: json
+    env_file: .env.api
     depends_on:
       postgres:
         condition: service_healthy
@@ -232,9 +211,7 @@ services:
     container_name: kafka-ui
     ports:
       - "8082:8080"
-    environment:
-      KAFKA_CLUSTERS_0_NAME: storm-kafka
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    env_file: .env.kafka-ui
     depends_on:
       kafka:
         condition: service_healthy

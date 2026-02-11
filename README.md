@@ -38,6 +38,7 @@ The stack also includes a **dashboard** (interactive Leaflet map with filters an
   storm-data-collector/
   storm-data-etl/
   storm-data-api/
+  storm-data-shared/          <-- shared Go library (config, observability, retry)
   storm-data-system/          <-- this repo
 ```
 

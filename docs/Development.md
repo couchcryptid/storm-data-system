@@ -7,6 +7,7 @@ For service-specific development guides:
 - [Collector Development](https://github.com/couchcryptid/storm-data-collector/wiki/Development)
 - [ETL Development](https://github.com/couchcryptid/storm-data-etl/wiki/Development)
 - [API Development](https://github.com/couchcryptid/storm-data-api/wiki/Development)
+- [Shared Library Development](https://github.com/couchcryptid/storm-data-shared/wiki/Development)
 
 ## Prerequisites
 
@@ -24,12 +25,13 @@ For service-specific development guides:
 ```
 ~/Projects/hailtrace/
   storm-data-collector/       # TypeScript, KafkaJS, Vitest
-  storm-data-etl/     # Go, hexagonal architecture, kafka-go
-  storm-data-api/     # Go, gqlgen, pgx, chi
+  storm-data-etl/             # Go, hexagonal architecture, kafka-go
+  storm-data-api/             # Go, gqlgen, pgx, chi
+  storm-data-shared/          # Go, shared library (config, observability, retry)
   storm-data-system/          # Unified stack, E2E tests, docs
 ```
 
-All four repos should be cloned as siblings under the same parent directory. The unified `compose.yml` references sibling repos via relative paths (`../storm-data-collector`, etc.).
+All five repos should be cloned as siblings under the same parent directory. The unified `compose.yml` references sibling repos via relative paths (`../storm-data-collector`, etc.). The shared library is consumed as a Go module dependency, not via relative paths.
 
 ## Working on a Single Service
 
@@ -67,6 +69,20 @@ make down        # Tear down
 
 See [[Deployment]] for the complete command reference and [[Testing]] for the testing strategy.
 
+## Shared Library
+
+The [storm-data-shared](https://github.com/couchcryptid/storm-data-shared) Go module provides common infrastructure code used by both Go services. It is imported as a regular Go module dependency (`github.com/couchcryptid/storm-data-shared`).
+
+| Package | What It Provides | Used By |
+|---------|-----------------|---------|
+| `config` | `EnvOrDefault`, `ParseBrokers`, `ParseBatchSize`, `ParseBatchFlushInterval`, `ParseShutdownTimeout` | ETL, API |
+| `observability` | `NewLogger` (slog), `LivenessHandler`, `ReadinessHandler`, `ReadinessChecker` interface | ETL, API |
+| `retry` | `NextBackoff`, `SleepWithContext` | ETL |
+
+Each service wraps shared functions in thin service-specific adapters. For example, the ETL's `observability.NewLogger(cfg)` calls `sharedobs.NewLogger(cfg.LogLevel, cfg.LogFormat)`, keeping the shared library free of service-specific types.
+
+See the [Shared Library wiki](https://github.com/couchcryptid/storm-data-shared/wiki) for architecture details and configuration reference.
+
 ## Cross-Service Conventions
 
 These conventions are shared across all services. They were standardized to ensure consistency across the TypeScript and Go codebases.
@@ -101,7 +117,7 @@ All three services expose the same operational endpoints:
 
 | Convention | Collector | ETL | API |
 |-----------|-----------|-----|-----|
-| Library | Pino | `log/slog` | `log/slog` |
+| Library | Pino | `log/slog` via [storm-data-shared](https://github.com/couchcryptid/storm-data-shared) | `log/slog` via [storm-data-shared](https://github.com/couchcryptid/storm-data-shared) |
 | Format control | `LOG_LEVEL` | `LOG_LEVEL` + `LOG_FORMAT` | `LOG_LEVEL` + `LOG_FORMAT` |
 | Production format | JSON (default) | JSON (default) | JSON (default) |
 | Structured fields | Object first argument | Key-value pairs | Key-value pairs |
@@ -111,6 +127,7 @@ All three services expose the same operational endpoints:
 | Convention | Collector | ETL | API |
 |-----------|-----------|-----|-----|
 | Source | Environment variables | Environment variables | Environment variables |
+| Shared parsers | -- | [storm-data-shared/config](https://github.com/couchcryptid/storm-data-shared) | [storm-data-shared/config](https://github.com/couchcryptid/storm-data-shared) |
 | Validation | Zod schema | `config.Load() (*Config, error)` | `config.Load() (*Config, error)` |
 | Failure mode | Exit with Zod error | Exit with error message | Exit with error message |
 
@@ -133,7 +150,7 @@ All services follow the same shutdown pattern:
 | Pre-commit | Husky + lint-staged | `.pre-commit-config.yaml` | `.pre-commit-config.yaml` |
 | Secret detection | -- | gitleaks | gitleaks |
 
-The Go services share a `.golangci.yml` configuration with `gocritic` (diagnostic/style/performance) and `revive` (exported) enabled.
+All three Go projects (ETL, API, and [shared library](https://github.com/couchcryptid/storm-data-shared)) share a `.golangci.yml` configuration with `gocritic` (diagnostic/style/performance) and `revive` (exported) enabled.
 
 ### CI Pipelines
 

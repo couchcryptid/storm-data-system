@@ -9,6 +9,7 @@
 - [[Deployment]]
 - [[Development]]
 - [[Testing]]
+- [[Code Quality]]
 - [[Observability]]
 - [[Common Tasks]]
 - [[Troubleshooting]]

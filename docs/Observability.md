@@ -20,6 +20,8 @@ All three services expose identical operational endpoints:
 | ETL | `localhost:8081` | At least one message processed |
 | API | `localhost:8080` | PostgreSQL pool responds to ping |
 
+The Go services (ETL and API) implement health endpoints using the [storm-data-shared](https://github.com/couchcryptid/storm-data-shared) `observability` package, which provides `LivenessHandler()`, `ReadinessHandler()`, and the `ReadinessChecker` interface. The collector implements the same contract independently in TypeScript.
+
 In the unified Docker Compose stack, readiness determines whether dependent services start (via health check conditions).
 
 ## Prometheus Metrics
@@ -84,8 +86,8 @@ rate(storm_api_http_requests_total[1m])
 ### Latency
 
 ```promql
-# ETL per-message processing (p99)
-histogram_quantile(0.99, rate(storm_etl_processing_duration_seconds_bucket[5m]))
+# ETL batch processing (p99)
+histogram_quantile(0.99, rate(storm_etl_batch_processing_duration_seconds_bucket[5m]))
 
 # API HTTP request latency (p99)
 histogram_quantile(0.99, rate(storm_api_http_request_duration_seconds_bucket[5m]))
@@ -132,8 +134,8 @@ All services support configurable log levels via `LOG_LEVEL`:
 | Service | Library | Format Control |
 |---------|---------|---------------|
 | Collector | Pino | `LOG_LEVEL` (JSON default, pino-pretty in dev) |
-| ETL | `log/slog` | `LOG_LEVEL` + `LOG_FORMAT` (`json` or `text`) |
-| API | `log/slog` | `LOG_LEVEL` + `LOG_FORMAT` (`json` or `text`) |
+| ETL | `log/slog` via [storm-data-shared](https://github.com/couchcryptid/storm-data-shared) | `LOG_LEVEL` + `LOG_FORMAT` (`json` or `text`) |
+| API | `log/slog` via [storm-data-shared](https://github.com/couchcryptid/storm-data-shared) | `LOG_LEVEL` + `LOG_FORMAT` (`json` or `text`) |
 
 ## Data Lag Monitoring
 

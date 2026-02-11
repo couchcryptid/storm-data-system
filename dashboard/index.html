@@ -24,6 +24,7 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      padding-bottom: 44px;
     }
     header {
       display: flex;
@@ -37,12 +38,60 @@
       font-weight: 600;
     }
     header h1 span { color: var(--accent); }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
     .status {
       font-size: 13px;
       color: var(--text-dim);
     }
     .status.ok { color: #4ade80; }
     .status.err { color: var(--tornado); }
+
+    /* Data freshness badge */
+    .freshness {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .freshness-label { color: var(--text-dim); }
+    .freshness-value { font-weight: 600; }
+    .freshness-ok .freshness-value { color: #4ade80; }
+    .freshness-warn .freshness-value { color: #fde047; }
+    .freshness-stale .freshness-value { color: #fb923c; }
+    .freshness-err .freshness-value { color: var(--tornado); }
+
+    /* System toolbar */
+    .system-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 8px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tool-link {
+      padding: 5px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 12px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .tool-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
     .stats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -74,6 +123,76 @@
     .stat-card.hail .value { color: var(--hail); }
     .stat-card.tornado .value { color: var(--tornado); }
     .stat-card.wind .value { color: var(--wind); }
+
+    /* Activity timeline */
+    .timeline-section {
+      margin: 0 24px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .timeline-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .timeline {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 140px;
+      overflow-x: auto;
+    }
+    .tl-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      min-width: 28px;
+    }
+    .tl-count {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-bottom: 2px;
+    }
+    .tl-stacks {
+      display: flex;
+      flex-direction: column-reverse;
+      width: 100%;
+      gap: 1px;
+    }
+    .tl-seg {
+      width: 100%;
+      border-radius: 2px;
+      min-height: 0;
+    }
+    .tl-seg.hail { background: var(--hail); }
+    .tl-seg.tornado { background: var(--tornado); }
+    .tl-seg.wind { background: var(--wind); }
+    .tl-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      white-space: nowrap;
+    }
+    .tl-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .tl-legend-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
     .main {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -155,17 +274,130 @@
       height: 200px;
       color: var(--text-dim);
     }
+
+    /* Query panel */
+    .query-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      transition: height 0.25s ease;
+      height: 44px;
+      overflow: hidden;
+    }
+    .query-panel.expanded { height: 400px; }
+    .query-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      min-height: 44px;
+      cursor: pointer;
+    }
+    .query-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .query-bar-left .arrow {
+      font-size: 10px;
+      color: var(--text-dim);
+      transition: transform 0.25s;
+    }
+    .query-panel.expanded .query-bar-left .arrow { transform: rotate(180deg); }
+    .query-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .query-bar-right label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+    .query-run-btn {
+      padding: 4px 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .query-run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .query-run-btn:not(:disabled):hover { background: #4a90d9; }
+    .query-time { font-size: 11px; color: var(--text-dim); }
+    .query-body {
+      display: flex;
+      gap: 12px;
+      padding: 0 24px 16px;
+      flex: 1;
+      overflow: hidden;
+    }
+    .query-textarea {
+      flex: 1;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      resize: none;
+      tab-size: 2;
+    }
+    .query-result {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text-dim);
+    }
+
     @media (max-width: 900px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .main { grid-template-columns: 1fr; }
+      .query-body { flex-direction: column; }
     }
   </style>
 </head>
 <body>
   <header>
     <h1><span>Storm Data</span> Dashboard</h1>
-    <div id="status" class="status">Connecting...</div>
+    <div class="header-right">
+      <div id="freshness" class="freshness" style="display:none">
+        <span class="freshness-label">Data lag:</span>
+        <span id="freshness-value" class="freshness-value">--</span>
+      </div>
+      <div id="status" class="status">Connecting...</div>
+    </div>
   </header>
+
+  <div class="system-toolbar">
+    <a href="http://localhost:8080" target="_blank" rel="noopener noreferrer" class="tool-link">GraphQL Playground</a>
+    <a href="http://localhost:9090" target="_blank" rel="noopener noreferrer" class="tool-link">Prometheus</a>
+    <a href="http://localhost:8082" target="_blank" rel="noopener noreferrer" class="tool-link">Kafka UI</a>
+  </div>
 
   <div class="stats">
     <div class="stat-card">
@@ -187,6 +419,16 @@
       <div class="label">Wind</div>
       <div class="value" id="wind-count">--</div>
       <div class="sub" id="wind-max"></div>
+    </div>
+  </div>
+
+  <div class="timeline-section">
+    <div class="timeline-title">Activity by Hour (UTC)</div>
+    <div id="timeline" class="timeline"></div>
+    <div class="tl-legend">
+      <span><span class="tl-legend-dot" style="background:var(--hail)"></span>Hail</span>
+      <span><span class="tl-legend-dot" style="background:var(--tornado)"></span>Tornado</span>
+      <span><span class="tl-legend-dot" style="background:var(--wind)"></span>Wind</span>
     </div>
   </div>
 
@@ -237,10 +479,30 @@
     </div>
   </div>
 
-<script>
-const API_URL = window.location.hostname === 'localhost'
+  <!-- Query panel (fixed bottom drawer) -->
+  <div id="query-panel" class="query-panel">
+    <div class="query-bar" id="query-bar">
+      <div class="query-bar-left">
+        <span class="arrow">&#9650;</span>
+        GraphQL Query
+      </div>
+      <div class="query-bar-right">
+        <label><input type="checkbox" id="query-editable"> Edit</label>
+        <button id="query-run" class="query-run-btn" disabled>Run</button>
+        <span id="query-time" class="query-time"></span>
+      </div>
+    </div>
+    <div class="query-body">
+      <textarea id="query-text" class="query-textarea" readonly spellcheck="false"></textarea>
+      <pre id="query-result" class="query-result">Run a query to see results here.</pre>
+    </div>
+  </div>
+
+<script type="module">
+const loc = globalThis.location;
+const API_URL = loc.hostname === 'localhost'
   ? 'http://localhost:8080/query'
-  : `${window.location.protocol}//${window.location.hostname}:8080/query`;
+  : `${loc.protocol}//${loc.hostname}:8080/query`;
 
 const COLORS = { hail: '#38bdf8', tornado: '#f87171', wind: '#a78bfa' };
 
@@ -260,6 +522,8 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
 let allReports = [];
 let markers = L.layerGroup().addTo(map);
 
+// ── GraphQL client ──────────────────────────────────────────
+
 async function gql(query) {
   const res = await fetch(API_URL, {
     method: 'POST',
@@ -271,6 +535,8 @@ async function gql(query) {
   if (json.errors) throw new Error(json.errors.map(e => e.message).join(', '));
   return json.data;
 }
+
+// ── Formatters ──────────────────────────────────────────────
 
 function fmtMag(r) {
   const m = r.measurement;
@@ -295,6 +561,8 @@ function fmtMaxMag(m) {
   return `max ${m.magnitude}`;
 }
 
+// ── Stats cards ─────────────────────────────────────────────
+
 function renderStats(agg) {
   const byType = {};
   for (const g of agg.byEventType) byType[g.eventType] = g;
@@ -306,6 +574,95 @@ function renderStats(agg) {
     document.getElementById(`${type}-max`).textContent = g ? fmtMaxMag(g.maxMeasurement) : '';
   }
 }
+
+// ── Data freshness ──────────────────────────────────────────
+
+function renderFreshness(meta) {
+  const el = document.getElementById('freshness');
+  const val = document.getElementById('freshness-value');
+  if (!meta) return;
+  el.style.display = '';
+
+  if (meta.dataLagMinutes != null) {
+    const lag = meta.dataLagMinutes;
+    val.textContent = lag < 60 ? `${lag}m` : `${Math.floor(lag / 60)}h ${lag % 60}m`;
+    let level = 'freshness-err';
+    if (lag < 5) level = 'freshness-ok';
+    else if (lag < 30) level = 'freshness-warn';
+    else if (lag < 60) level = 'freshness-stale';
+    el.className = `freshness ${level}`;
+  } else if (meta.lastUpdated) {
+    val.textContent = fmtTime(meta.lastUpdated) + ' UTC';
+    el.className = 'freshness freshness-warn';
+  } else {
+    val.textContent = 'No data';
+    el.className = 'freshness freshness-err';
+  }
+}
+
+// ── Activity timeline ───────────────────────────────────────
+
+function renderTimeline(reports) {
+  const buckets = {};
+  for (const r of reports) {
+    // Truncate beginTime to the hour
+    const hour = r.beginTime.slice(0, 13) + ':00';
+    if (!buckets[hour]) buckets[hour] = { hail: 0, tornado: 0, wind: 0 };
+    buckets[hour][r.eventType] = (buckets[hour][r.eventType] || 0) + 1;
+  }
+
+  const sorted = Object.keys(buckets).sort();
+  const el = document.getElementById('timeline');
+  el.innerHTML = '';
+
+  if (sorted.length === 0) {
+    el.innerHTML = '<span style="color:var(--text-dim);font-size:13px">No activity data</span>';
+    return;
+  }
+
+  const maxTotal = Math.max(...sorted.map(k => {
+    const b = buckets[k];
+    return b.hail + b.tornado + b.wind;
+  }));
+  const maxBarHeight = 100;
+
+  for (const hour of sorted) {
+    const c = buckets[hour];
+    const total = c.hail + c.tornado + c.wind;
+    const scale = total / maxTotal;
+
+    const bar = document.createElement('div');
+    bar.className = 'tl-bar';
+
+    const countEl = document.createElement('div');
+    countEl.className = 'tl-count';
+    countEl.textContent = total;
+    bar.appendChild(countEl);
+
+    const stacks = document.createElement('div');
+    stacks.className = 'tl-stacks';
+
+    for (const type of ['hail', 'tornado', 'wind']) {
+      if (c[type] > 0) {
+        const seg = document.createElement('div');
+        seg.className = `tl-seg ${type}`;
+        seg.style.height = `${(c[type] / total) * scale * maxBarHeight}px`;
+        seg.title = `${type}: ${c[type]}`;
+        stacks.appendChild(seg);
+      }
+    }
+    bar.appendChild(stacks);
+
+    const label = document.createElement('div');
+    label.className = 'tl-label';
+    label.textContent = hour.slice(11, 16);
+    bar.appendChild(label);
+
+    el.appendChild(bar);
+  }
+}
+
+// ── Map markers ─────────────────────────────────────────────
 
 function createMarker(r) {
   const color = COLORS[r.eventType] || '#fff';
@@ -332,6 +689,8 @@ function createMarker(r) {
     </div>
   `);
 }
+
+// ── Filters ─────────────────────────────────────────────────
 
 function applyFilters() {
   const typeF = document.getElementById('filter-type').value;
@@ -376,58 +735,109 @@ function populateStateFilter(reports) {
   }
 }
 
+// ── Query panel ─────────────────────────────────────────────
+
+function setQueryText(query) {
+  document.getElementById('query-text').value = query;
+}
+
+document.getElementById('query-bar').addEventListener('click', (e) => {
+  if (e.target.closest('.query-bar-right')) return;
+  document.getElementById('query-panel').classList.toggle('expanded');
+});
+
+document.getElementById('query-editable').addEventListener('change', (e) => {
+  document.getElementById('query-text').readOnly = !e.target.checked;
+  document.getElementById('query-run').disabled = !e.target.checked;
+});
+
+document.getElementById('query-run').addEventListener('click', async () => {
+  const query = document.getElementById('query-text').value;
+  const resultEl = document.getElementById('query-result');
+  const timeEl = document.getElementById('query-time');
+  resultEl.textContent = 'Running...';
+  timeEl.textContent = '';
+
+  const start = performance.now();
+  try {
+    const data = await gql(query);
+    const elapsed = Math.round(performance.now() - start);
+    timeEl.textContent = `${elapsed}ms`;
+    resultEl.textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    const elapsed = Math.round(performance.now() - start);
+    timeEl.textContent = `${elapsed}ms`;
+    resultEl.textContent = `Error: ${err.message}`;
+  }
+});
+
+// ── Data fetch ──────────────────────────────────────────────
+
+const REPORT_QUERY = `{
+  stormReports(filter: {
+    timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" }
+    sortBy: BEGIN_TIME
+    sortOrder: DESC
+    limit: 20
+    offset: __OFFSET__
+  }) {
+    totalCount hasMore
+    reports {
+      id eventType
+      geo { lat lon }
+      measurement { magnitude unit severity }
+      beginTime
+      location { raw name state county direction distance }
+      comments
+      sourceOffice
+    }
+    aggregations {
+      totalCount
+      byEventType { eventType count maxMeasurement { magnitude unit } }
+      byState { state count }
+    }
+    meta { lastUpdated dataLagMinutes }
+  }
+}`;
+
 async function fetchAllReports() {
   let all = [];
   let offset = 0;
   const limit = 20;
   let hasMore = true;
+  let meta = null;
 
   while (hasMore) {
-    const data = await gql(`{
-      stormReports(filter: {
-        timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" }
-        sortBy: BEGIN_TIME
-        sortOrder: DESC
-        limit: ${limit}
-        offset: ${offset}
-      }) {
-        totalCount hasMore
-        reports {
-          id eventType
-          geo { lat lon }
-          measurement { magnitude unit severity }
-          beginTime
-          location { raw name state county direction distance }
-          comments
-          sourceOffice
-        }
-        aggregations {
-          totalCount
-          byEventType { eventType count maxMeasurement { magnitude unit } }
-          byState { state count }
-        }
-      }
-    }`);
+    const query = REPORT_QUERY.replace('__OFFSET__', offset);
+    if (offset === 0) setQueryText(query);
+    const data = await gql(query);
     const sr = data.stormReports;
     all = all.concat(sr.reports);
     hasMore = sr.hasMore;
     offset += limit;
 
-    // Use aggregations from first page (they cover the full result set)
-    if (offset === limit) renderStats(sr.aggregations);
+    if (!meta) {
+      renderStats(sr.aggregations);
+      meta = sr.meta;
+    }
   }
-  return all;
+  return { reports: all, meta };
 }
+
+// ── Init ────────────────────────────────────────────────────
 
 async function init() {
   const statusEl = document.getElementById('status');
   try {
     statusEl.textContent = 'Loading data...';
-    allReports = await fetchAllReports();
+    const { reports, meta } = await fetchAllReports();
+    allReports = reports;
+
+    renderFreshness(meta);
+    renderTimeline(allReports);
     populateStateFilter(allReports);
     applyFilters();
 
-    // Fit map to markers
     if (allReports.length > 0) {
       const bounds = L.latLngBounds(allReports.map(r => [r.geo.lat, r.geo.lon]));
       map.fitBounds(bounds, { padding: [30, 30] });
@@ -452,7 +862,7 @@ document.getElementById('filter-type').addEventListener('change', applyFilters);
 document.getElementById('filter-state').addEventListener('change', applyFilters);
 document.getElementById('filter-severity').addEventListener('change', applyFilters);
 
-init();
+await init();
 </script>
 </body>
 </html>

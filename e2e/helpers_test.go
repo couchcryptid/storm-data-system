@@ -195,22 +195,26 @@ type queryMeta struct {
 }
 
 type stormReport struct {
-	ID               string      `json:"id"`
-	EventType        string      `json:"eventType"`
-	Geo              geo         `json:"geo"`
-	Measurement      measurement `json:"measurement"`
-	BeginTime        string      `json:"beginTime"`
-	EndTime          string      `json:"endTime"`
-	Source           string      `json:"source"`
-	SourceOffice     string      `json:"sourceOffice"`
-	Location         location    `json:"location"`
-	Comments         string      `json:"comments"`
-	TimeBucket       string      `json:"timeBucket"`
-	ProcessedAt      string      `json:"processedAt"`
-	FormattedAddress string      `json:"formattedAddress"`
-	PlaceName        string      `json:"placeName"`
-	GeoConfidence    float64     `json:"geoConfidence"`
-	GeoSource        string      `json:"geoSource"`
+	ID           string      `json:"id"`
+	EventType    string      `json:"eventType"`
+	Geo          geo         `json:"geo"`
+	Measurement  measurement `json:"measurement"`
+	BeginTime    string      `json:"beginTime"`
+	EndTime      string      `json:"endTime"`
+	Source       string      `json:"source"`
+	SourceOffice string      `json:"sourceOffice"`
+	Location     location    `json:"location"`
+	Comments     string      `json:"comments"`
+	TimeBucket   string      `json:"timeBucket"`
+	ProcessedAt  string      `json:"processedAt"`
+	Geocoding    geocoding   `json:"geocoding"`
+}
+
+type geocoding struct {
+	FormattedAddress string  `json:"formattedAddress"`
+	PlaceName        string  `json:"placeName"`
+	Confidence       float64 `json:"confidence"`
+	Source           string  `json:"source"`
 }
 
 type measurement struct {

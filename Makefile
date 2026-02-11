@@ -1,4 +1,4 @@
-.PHONY: up down logs test-e2e build clean ps wait-healthy docs-svg
+.PHONY: up down logs test-e2e test-uat build clean ps wait-healthy docs-svg
 
 # --- Stack Management ---
 
@@ -40,6 +40,15 @@ test-e2e: up ## Run E2E tests (starts stack first)
 
 test-e2e-only: ## Run E2E tests against an already-running stack
 	cd e2e && go test -v -count=1 -timeout 5m ./...
+
+# --- UAT Tests ---
+
+test-uat: up ## Run UAT tests (starts stack first)
+	@echo "Running UAT tests..."
+	cd uat && npx playwright test
+
+test-uat-only: ## Run UAT tests against an already-running stack
+	cd uat && npx playwright test
 
 # --- Helpers ---
 

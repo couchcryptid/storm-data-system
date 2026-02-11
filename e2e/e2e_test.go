@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"math"
 	"testing"
 )
 
@@ -114,7 +115,7 @@ func TestReportEnrichment(t *testing.T) {
 				id eventType
 				measurement { magnitude unit severity }
 				sourceOffice timeBucket processedAt
-				formattedAddress placeName geoConfidence geoSource
+				geocoding { formattedAddress placeName confidence source }
 				geo { lat lon }
 				location { raw name state county }
 			}
@@ -281,4 +282,175 @@ func TestMeta(t *testing.T) {
 	if sr.Meta.DataLagMinutes == nil {
 		t.Error("meta.dataLagMinutes is nil")
 	}
+}
+
+func TestPagination(t *testing.T) {
+	ensureDataPropagated(t)
+
+	// First page: limit 5, offset 0
+	page1Query := `{
+		stormReports(filter: {
+			` + wideTimeRange + `
+			limit: 5
+			offset: 0
+		}) {
+			totalCount hasMore
+			reports { id }
+		}
+	}`
+
+	r1 := graphQLQuery(t, page1Query)
+	sr1 := r1.Data.StormReports
+
+	if sr1.TotalCount != expectedTotal {
+		t.Errorf("page 1 totalCount = %d, want %d", sr1.TotalCount, expectedTotal)
+	}
+	if !sr1.HasMore {
+		t.Error("page 1 hasMore should be true")
+	}
+	if len(sr1.Reports) != 5 {
+		t.Errorf("page 1 reports = %d, want 5", len(sr1.Reports))
+	}
+
+	// Second page: limit 5, offset 5
+	page2Query := `{
+		stormReports(filter: {
+			` + wideTimeRange + `
+			limit: 5
+			offset: 5
+		}) {
+			totalCount hasMore
+			reports { id }
+		}
+	}`
+
+	r2 := graphQLQuery(t, page2Query)
+	sr2 := r2.Data.StormReports
+
+	if len(sr2.Reports) != 5 {
+		t.Errorf("page 2 reports = %d, want 5", len(sr2.Reports))
+	}
+
+	// Pages must return different reports.
+	ids := map[string]bool{}
+	for _, r := range sr1.Reports {
+		ids[r.ID] = true
+	}
+	for _, r := range sr2.Reports {
+		if ids[r.ID] {
+			t.Errorf("page 2 contains duplicate ID %s from page 1", r.ID)
+		}
+	}
+}
+
+func TestSeverityFilter(t *testing.T) {
+	ensureDataPropagated(t)
+
+	query := `{
+		stormReports(filter: {
+			` + wideTimeRange + `
+			severity: [SEVERE]
+		}) {
+			totalCount
+			reports { measurement { severity } }
+		}
+	}`
+
+	result := graphQLQuery(t, query)
+	sr := result.Data.StormReports
+
+	if sr.TotalCount == 0 {
+		t.Fatal("expected at least one severe report")
+	}
+	if sr.TotalCount >= expectedTotal {
+		t.Errorf("severity filter should narrow results: got %d/%d", sr.TotalCount, expectedTotal)
+	}
+	for _, r := range sr.Reports {
+		if r.Measurement.Severity == nil || *r.Measurement.Severity != "severe" {
+			sev := "<nil>"
+			if r.Measurement.Severity != nil {
+				sev = *r.Measurement.Severity
+			}
+			t.Errorf("filtered report has severity %q, want severe", sev)
+		}
+	}
+}
+
+func TestSortByMagnitude(t *testing.T) {
+	ensureDataPropagated(t)
+
+	query := `{
+		stormReports(filter: {
+			` + wideTimeRange + `
+			eventTypes: [HAIL]
+			sortBy: MAGNITUDE
+			sortOrder: DESC
+			limit: 10
+		}) {
+			reports { measurement { magnitude } }
+		}
+	}`
+
+	result := graphQLQuery(t, query)
+	reports := result.Data.StormReports.Reports
+
+	if len(reports) < 2 {
+		t.Fatal("expected at least 2 hail reports")
+	}
+
+	for i := 1; i < len(reports); i++ {
+		prev := reports[i-1].Measurement.Magnitude
+		curr := reports[i].Measurement.Magnitude
+		if prev < curr {
+			t.Errorf("reports not sorted DESC by magnitude: index %d (%.2f) < index %d (%.2f)", i-1, prev, i, curr)
+		}
+	}
+}
+
+func TestGeoRadiusFilter(t *testing.T) {
+	ensureDataPropagated(t)
+
+	// Use approximate center of Nebraska (NE has 100 reports in mock data).
+	// A 50-mile radius should return some but not all NE reports.
+	query := `{
+		stormReports(filter: {
+			` + wideTimeRange + `
+			near: { lat: 41.0, lon: -99.0, radiusMiles: 50 }
+		}) {
+			totalCount
+			reports { geo { lat lon } }
+		}
+	}`
+
+	result := graphQLQuery(t, query)
+	sr := result.Data.StormReports
+
+	if sr.TotalCount == 0 {
+		t.Fatal("expected at least one report within 50 miles of central NE")
+	}
+	if sr.TotalCount >= expectedTotal {
+		t.Errorf("geo filter should narrow results: got %d/%d", sr.TotalCount, expectedTotal)
+	}
+
+	// Verify all returned reports are within ~50 miles of the center.
+	const maxMiles = 55.0 // small tolerance for floating-point
+	for _, r := range sr.Reports {
+		dist := haversine(41.0, -99.0, r.Geo.Lat, r.Geo.Lon)
+		if dist > maxMiles {
+			t.Errorf("report at (%.4f, %.4f) is %.1f miles away, exceeds %.1f",
+				r.Geo.Lat, r.Geo.Lon, dist, maxMiles)
+		}
+	}
+}
+
+// haversine returns the great-circle distance in miles between two points.
+func haversine(lat1, lon1, lat2, lon2 float64) float64 {
+	const earthRadiusMiles = 3959.0
+	dLat := (lat2 - lat1) * math.Pi / 180
+	dLon := (lon2 - lon1) * math.Pi / 180
+	lat1r := lat1 * math.Pi / 180
+	lat2r := lat2 * math.Pi / 180
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(lat1r)*math.Cos(lat2r)*math.Sin(dLon/2)*math.Sin(dLon/2)
+	return earthRadiusMiles * 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 }

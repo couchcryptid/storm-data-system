@@ -434,7 +434,16 @@
 
   <div class="main">
     <div class="panel">
-      <div class="panel-header">Event Map</div>
+      <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between">
+        Event Map
+        <label style="font-size:12px;color:var(--text-dim);font-weight:normal;display:flex;align-items:center;gap:4px">
+          Color:
+          <select id="map-color-mode" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:12px">
+            <option value="type">By Type</option>
+            <option value="severity">By Severity</option>
+          </select>
+        </label>
+      </div>
       <div id="map"></div>
     </div>
     <div class="panel">
@@ -459,6 +468,9 @@
             <option value="severe">Severe</option>
             <option value="extreme">Extreme</option>
           </select>
+        </label>
+        <label>County:
+          <select id="filter-county" disabled><option value="">All</option></select>
         </label>
       </div>
       <div class="table-wrap">
@@ -505,6 +517,7 @@ const API_URL = loc.hostname === 'localhost'
   : `${loc.protocol}//${loc.hostname}:8080/query`;
 
 const COLORS = { hail: '#38bdf8', tornado: '#f87171', wind: '#a78bfa' };
+const SEVERITY_COLORS = { minor: '#86efac', moderate: '#fde047', severe: '#fb923c', extreme: '#f87171' };
 
 function esc(text) {
   const d = document.createElement('div');
@@ -605,8 +618,8 @@ function renderFreshness(meta) {
 function renderTimeline(reports) {
   const buckets = {};
   for (const r of reports) {
-    // Truncate beginTime to the hour
-    const hour = r.beginTime.slice(0, 13) + ':00';
+    // Truncate eventTime to the hour
+    const hour = r.eventTime.slice(0, 13) + ':00';
     if (!buckets[hour]) buckets[hour] = { hail: 0, tornado: 0, wind: 0 };
     buckets[hour][r.eventType] = (buckets[hour][r.eventType] || 0) + 1;
   }
@@ -665,12 +678,24 @@ function renderTimeline(reports) {
 // ── Map markers ─────────────────────────────────────────────
 
 function createMarker(r) {
-  const color = COLORS[r.eventType] || '#fff';
-  const sev = r.measurement.severity;
-  let radius = 5;
-  if (sev === 'moderate') radius = 7;
-  if (sev === 'severe') radius = 9;
-  if (sev === 'extreme') radius = 12;
+  const colorMode = document.getElementById('map-color-mode').value;
+  let color, radius;
+
+  if (colorMode === 'severity') {
+    color = SEVERITY_COLORS[r.measurement.severity] || '#666';
+    const mag = r.measurement.magnitude || 0;
+    if (r.eventType === 'hail') radius = Math.min(14, Math.max(4, mag * 4));
+    else if (r.eventType === 'tornado') radius = Math.min(14, Math.max(4, mag * 2 + 4));
+    else if (r.eventType === 'wind') radius = Math.min(14, Math.max(4, (mag - 40) / 6 + 4));
+    else radius = 5;
+  } else {
+    color = COLORS[r.eventType] || '#fff';
+    const sev = r.measurement.severity;
+    radius = 5;
+    if (sev === 'moderate') radius = 7;
+    if (sev === 'severe') radius = 9;
+    if (sev === 'extreme') radius = 12;
+  }
 
   return L.circleMarker([r.geo.lat, r.geo.lon], {
     radius,
@@ -684,7 +709,7 @@ function createMarker(r) {
       <strong>${esc(r.eventType.toUpperCase())}</strong> &mdash; ${fmtMag(r)}<br>
       <span style="color:#888">${esc(r.location.name || r.location.raw)}, ${esc(r.location.state)}</span><br>
       <span style="color:#888">${esc(r.location.county)} County</span><br>
-      <span style="color:#888">${fmtTime(r.beginTime)}</span><br>
+      <span style="color:#888">${fmtTime(r.eventTime)}</span><br>
       ${r.comments ? `<em style="color:#aaa;font-size:12px">${esc(r.comments)}</em>` : ''}
     </div>
   `);
@@ -696,6 +721,7 @@ function applyFilters() {
   const typeF = document.getElementById('filter-type').value;
   const stateF = document.getElementById('filter-state').value;
   const sevF = document.getElementById('filter-severity').value;
+  const countyF = document.getElementById('filter-county').value;
 
   markers.clearLayers();
   const tbody = document.getElementById('report-body');
@@ -705,6 +731,7 @@ function applyFilters() {
     if (typeF && r.eventType !== typeF) return false;
     if (stateF && r.location.state !== stateF) return false;
     if (sevF && r.measurement.severity !== sevF) return false;
+    if (countyF && r.location.county !== countyF) return false;
     return true;
   });
 
@@ -718,10 +745,12 @@ function applyFilters() {
       <td>${esc(r.location.state)}</td>
       <td>${fmtMag(r)}</td>
       <td><span class="severity-${esc(sev)}">${esc(sev) || '--'}</span></td>
-      <td>${fmtTime(r.beginTime)}</td>
+      <td>${fmtTime(r.eventTime)}</td>
     `;
     tbody.appendChild(tr);
   }
+
+  renderTimeline(filtered);
 }
 
 function populateStateFilter(reports) {
@@ -731,6 +760,25 @@ function populateStateFilter(reports) {
     const opt = document.createElement('option');
     opt.value = s;
     opt.textContent = s;
+    sel.appendChild(opt);
+  }
+}
+
+function populateCountyFilter(reports, state) {
+  const sel = document.getElementById('filter-county');
+  sel.innerHTML = '<option value="">All</option>';
+  if (!state) {
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  const counties = [...new Set(
+    reports.filter(r => r.location.state === state).map(r => r.location.county)
+  )].filter(Boolean).sort();
+  for (const c of counties) {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
     sel.appendChild(opt);
   }
 }
@@ -776,7 +824,7 @@ document.getElementById('query-run').addEventListener('click', async () => {
 const REPORT_QUERY = `{
   stormReports(filter: {
     timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" }
-    sortBy: BEGIN_TIME
+    sortBy: EVENT_TIME
     sortOrder: DESC
     limit: 20
     offset: __OFFSET__
@@ -786,7 +834,7 @@ const REPORT_QUERY = `{
       id eventType
       geo { lat lon }
       measurement { magnitude unit severity }
-      beginTime
+      eventTime
       location { raw name state county direction distance }
       comments
       sourceOffice
@@ -834,7 +882,6 @@ async function init() {
     allReports = reports;
 
     renderFreshness(meta);
-    renderTimeline(allReports);
     populateStateFilter(allReports);
     applyFilters();
 
@@ -848,7 +895,7 @@ async function init() {
 
     const dateRange = document.getElementById('date-range');
     if (allReports.length > 0) {
-      const times = allReports.map(r => new Date(r.beginTime)).sort((a, b) => a - b);
+      const times = allReports.map(r => new Date(r.eventTime)).sort((a, b) => a - b);
       dateRange.textContent = `${times[0].toISOString().slice(0, 10)} — ${times[times.length - 1].toISOString().slice(0, 10)}`;
     }
   } catch (err) {
@@ -859,8 +906,13 @@ async function init() {
 }
 
 document.getElementById('filter-type').addEventListener('change', applyFilters);
-document.getElementById('filter-state').addEventListener('change', applyFilters);
+document.getElementById('filter-state').addEventListener('change', () => {
+  populateCountyFilter(allReports, document.getElementById('filter-state').value);
+  applyFilters();
+});
 document.getElementById('filter-severity').addEventListener('change', applyFilters);
+document.getElementById('filter-county').addEventListener('change', applyFilters);
+document.getElementById('map-color-mode').addEventListener('change', applyFilters);
 
 await init();
 </script>

@@ -41,7 +41,7 @@ test.describe('Stats Cards', () => {
     const text = await page.locator('#date-range').textContent();
     expect(text).toBeTruthy();
     // Format: "YYYY-MM-DD — YYYY-MM-DD"
-    const match = text!.match(/^(\d{4}-\d{2}-\d{2}) — (\d{4}-\d{2}-\d{2})$/);
+    const match = /^(\d{4}-\d{2}-\d{2}) — (\d{4}-\d{2}-\d{2})$/.exec(text!);
     expect(match).not.toBeNull();
     // All mock data is processed in a single run, so both ends should be the same date.
     expect(match![1]).toBe(match![2]);

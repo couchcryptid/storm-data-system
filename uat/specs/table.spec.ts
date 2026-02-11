@@ -54,4 +54,31 @@ test.describe('Reports Table', () => {
     await applyFilters(page, { type: '' });
     expect(await page.locator('#report-body tr').count()).toBe(EXPECTED_TOTAL);
   });
+
+  test('county dropdown is disabled until state is selected', async ({ dashboardPage: page }) => {
+    await expect(page.locator('#filter-county')).toBeDisabled();
+
+    await applyFilters(page, { state: 'NE' });
+    await expect(page.locator('#filter-county')).toBeEnabled();
+
+    await applyFilters(page, { state: '' });
+    await expect(page.locator('#filter-county')).toBeDisabled();
+  });
+
+  test('county filter narrows results within a state', async ({ dashboardPage: page }) => {
+    await applyFilters(page, { state: 'NE' });
+
+    // County dropdown should have more than just the "All" option.
+    const countyOptions = page.locator('#filter-county option');
+    expect(await countyOptions.count()).toBeGreaterThan(1);
+
+    // Select the first actual county (after "All").
+    const firstCounty = await countyOptions.nth(1).getAttribute('value');
+    await applyFilters(page, { county: firstCounty! });
+
+    const rows = page.locator('#report-body tr');
+    const count = await rows.count();
+    expect(count).toBeGreaterThan(0);
+    expect(count).toBeLessThan(EXPECTED_TOP_STATES['NE']);
+  });
 });

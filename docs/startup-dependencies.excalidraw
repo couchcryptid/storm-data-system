@@ -14,9 +14,9 @@
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -76,9 +76,9 @@
       "strokeColor": "#868e96",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 60,
       "groupIds": [],
       "frameId": null,
@@ -113,7 +113,7 @@
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -121,7 +121,7 @@
         "type": 3
       },
       "seed": 200001,
-      "version": 1,
+      "version": 3,
       "versionNonce": 200002,
       "isDeleted": false,
       "boundElements": [
@@ -157,9 +157,9 @@
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -173,7 +173,7 @@
       "link": null,
       "locked": false,
       "text": "Kafka\napache/kafka:3.7.0",
-      "fontSize": 10,
+      "fontSize": 9,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
@@ -192,9 +192,9 @@
       "strokeColor": "#868e96",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -229,7 +229,7 @@
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -237,7 +237,7 @@
         "type": 3
       },
       "seed": 300001,
-      "version": 1,
+      "version": 3,
       "versionNonce": 300002,
       "isDeleted": false,
       "boundElements": [
@@ -265,9 +265,9 @@
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -281,7 +281,7 @@
       "link": null,
       "locked": false,
       "text": "PostgreSQL\npostgres:16",
-      "fontSize": 10,
+      "fontSize": 9,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
@@ -300,9 +300,9 @@
       "strokeColor": "#868e96",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -332,12 +332,12 @@
       "width": 126.7,
       "height": 60,
       "angle": 0,
-      "strokeColor": "#495057",
+      "strokeColor": "#868e96",
       "backgroundColor": "#dee2e6",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -345,7 +345,7 @@
         "type": 3
       },
       "seed": 400001,
-      "version": 1,
+      "version": 3,
       "versionNonce": 400002,
       "isDeleted": false,
       "boundElements": [
@@ -373,9 +373,9 @@
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -389,7 +389,7 @@
       "link": null,
       "locked": false,
       "text": "Mock Server\nGo",
-      "fontSize": 10,
+      "fontSize": 9,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
@@ -408,9 +408,9 @@
       "strokeColor": "#868e96",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -470,9 +470,9 @@
       "strokeColor": "#868e96",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 60,
       "groupIds": [],
       "frameId": null,
@@ -507,7 +507,7 @@
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -515,7 +515,7 @@
         "type": 3
       },
       "seed": 600001,
-      "version": 1,
+      "version": 3,
       "versionNonce": 600002,
       "isDeleted": false,
       "boundElements": [
@@ -547,9 +547,9 @@
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -563,7 +563,7 @@
       "link": null,
       "locked": false,
       "text": "Collector\nTypeScript",
-      "fontSize": 10,
+      "fontSize": 9,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
@@ -582,9 +582,9 @@
       "strokeColor": "#868e96",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -619,7 +619,7 @@
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -627,7 +627,7 @@
         "type": 3
       },
       "seed": 700001,
-      "version": 1,
+      "version": 3,
       "versionNonce": 700002,
       "isDeleted": false,
       "boundElements": [
@@ -655,9 +655,9 @@
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -671,7 +671,7 @@
       "link": null,
       "locked": false,
       "text": "ETL\nGo",
-      "fontSize": 10,
+      "fontSize": 9,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
@@ -690,9 +690,9 @@
       "strokeColor": "#868e96",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -727,7 +727,7 @@
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -735,7 +735,7 @@
         "type": 3
       },
       "seed": 800001,
-      "version": 1,
+      "version": 3,
       "versionNonce": 800002,
       "isDeleted": false,
       "boundElements": [
@@ -767,9 +767,9 @@
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -783,7 +783,7 @@
       "link": null,
       "locked": false,
       "text": "API\nGo",
-      "fontSize": 10,
+      "fontSize": 9,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
@@ -802,9 +802,9 @@
       "strokeColor": "#868e96",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 100,
       "groupIds": [],
       "frameId": null,
@@ -829,12 +829,12 @@
     {
       "id": "arrow_kafka_collector",
       "type": "arrow",
-      "x": 104.7,
-      "y": 156,
-      "width": 0.0,
-      "height": 210,
+      "x": 41.3,
+      "y": 126,
+      "width": 31.7,
+      "height": 240,
       "angle": 0,
-      "strokeColor": "#1e1e1e",
+      "strokeColor": "#fab005",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -845,7 +845,7 @@
       "frameId": null,
       "roundness": null,
       "seed": 900001,
-      "version": 1,
+      "version": 4,
       "versionNonce": 900002,
       "isDeleted": false,
       "boundElements": null,
@@ -858,23 +858,39 @@
           0
         ],
         [
-          0.0,
-          210
+          -15.0,
+          0
+        ],
+        [
+          -15.0,
+          240
+        ],
+        [
+          31.7,
+          240
         ]
       ],
       "lastCommittedPoint": [
-        0,
-        210
+        31.7,
+        240
       ],
       "startBinding": {
         "elementId": "kafka_box",
         "focus": 0,
-        "gap": 1
+        "gap": 1,
+        "fixedPoint": [
+          0,
+          0.5
+        ]
       },
       "endBinding": {
         "elementId": "collector_box",
         "focus": 0,
-        "gap": 1
+        "gap": 1,
+        "fixedPoint": [
+          0.25,
+          0
+        ]
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
@@ -883,12 +899,12 @@
     {
       "id": "arrow_kafka_etl",
       "type": "arrow",
-      "x": 136.3,
-      "y": 156,
-      "width": 145.7,
-      "height": 210,
+      "x": 168.0,
+      "y": 120,
+      "width": 114.0,
+      "height": 246,
       "angle": 0,
-      "strokeColor": "#1e1e1e",
+      "strokeColor": "#fab005",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -899,7 +915,7 @@
       "frameId": null,
       "roundness": null,
       "seed": 900003,
-      "version": 1,
+      "version": 4,
       "versionNonce": 900004,
       "isDeleted": false,
       "boundElements": null,
@@ -912,31 +928,39 @@
           0
         ],
         [
-          0.0,
-          100
+          17.0,
+          0
         ],
         [
-          145.7,
-          100
+          17.0,
+          246
         ],
         [
-          145.7,
-          210
+          114.0,
+          246
         ]
       ],
       "lastCommittedPoint": [
-        230,
-        210
+        114.0,
+        246
       ],
       "startBinding": {
         "elementId": "kafka_box",
         "focus": 0,
-        "gap": 1
+        "gap": 1,
+        "fixedPoint": [
+          1,
+          0.4
+        ]
       },
       "endBinding": {
         "elementId": "etl_box",
         "focus": 0,
-        "gap": 1
+        "gap": 1,
+        "fixedPoint": [
+          0.5,
+          0
+        ]
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
@@ -945,12 +969,12 @@
     {
       "id": "arrow_kafka_api",
       "type": "arrow",
-      "x": 155.3,
-      "y": 156,
-      "width": 304.0,
-      "height": 210,
+      "x": 168.0,
+      "y": 136,
+      "width": 259.7,
+      "height": 230,
       "angle": 0,
-      "strokeColor": "#1e1e1e",
+      "strokeColor": "#fab005",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -961,7 +985,7 @@
       "frameId": null,
       "roundness": null,
       "seed": 900005,
-      "version": 1,
+      "version": 4,
       "versionNonce": 900006,
       "isDeleted": false,
       "boundElements": null,
@@ -974,31 +998,43 @@
           0
         ],
         [
-          0.0,
-          70
+          27.0,
+          0
         ],
         [
-          304.0,
-          70
+          27.0,
+          164
         ],
         [
-          304.0,
-          210
+          259.7,
+          164
+        ],
+        [
+          259.7,
+          230
         ]
       ],
       "lastCommittedPoint": [
-        480,
-        210
+        259.7,
+        230
       ],
       "startBinding": {
         "elementId": "kafka_box",
         "focus": 0,
-        "gap": 1
+        "gap": 1,
+        "fixedPoint": [
+          1,
+          0.667
+        ]
       },
       "endBinding": {
         "elementId": "api_box",
         "focus": 0,
-        "gap": 1
+        "gap": 1,
+        "fixedPoint": [
+          0.25,
+          0
+        ]
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
@@ -1007,12 +1043,12 @@
     {
       "id": "arrow_postgres_api",
       "type": "arrow",
-      "x": 282.0,
-      "y": 156,
-      "width": 177.3,
-      "height": 210,
+      "x": 345.4,
+      "y": 126,
+      "width": 145.6,
+      "height": 240,
       "angle": 0,
-      "strokeColor": "#1e1e1e",
+      "strokeColor": "#2f9e44",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -1023,7 +1059,7 @@
       "frameId": null,
       "roundness": null,
       "seed": 900007,
-      "version": 1,
+      "version": 4,
       "versionNonce": 900008,
       "isDeleted": false,
       "boundElements": null,
@@ -1036,31 +1072,43 @@
           0
         ],
         [
-          0.0,
-          130
+          14.6,
+          0
         ],
         [
-          177.3,
-          130
+          14.6,
+          184
         ],
         [
-          177.3,
-          210
+          145.6,
+          184
+        ],
+        [
+          145.6,
+          240
         ]
       ],
       "lastCommittedPoint": [
-        280,
-        210
+        145.6,
+        240
       ],
       "startBinding": {
         "elementId": "postgres_box",
         "focus": 0,
-        "gap": 1
+        "gap": 1,
+        "fixedPoint": [
+          1,
+          0.5
+        ]
       },
       "endBinding": {
         "elementId": "api_box",
         "focus": 0,
-        "gap": 1
+        "gap": 1,
+        "fixedPoint": [
+          0.75,
+          0
+        ]
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
@@ -1069,10 +1117,10 @@
     {
       "id": "arrow_mock_collector",
       "type": "arrow",
-      "x": 459.3,
-      "y": 156,
-      "width": 354.7,
-      "height": 210,
+      "x": 522.7,
+      "y": 126,
+      "width": 418.0,
+      "height": 240,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -1085,7 +1133,7 @@
       "frameId": null,
       "roundness": null,
       "seed": 900009,
-      "version": 1,
+      "version": 4,
       "versionNonce": 900010,
       "isDeleted": false,
       "boundElements": null,
@@ -1098,31 +1146,43 @@
           0
         ],
         [
-          0.0,
-          140
+          14.3,
+          0
         ],
         [
-          -354.7,
-          140
+          14.3,
+          194
         ],
         [
-          -354.7,
-          210
+          -386.4,
+          194
+        ],
+        [
+          -386.4,
+          240
         ]
       ],
       "lastCommittedPoint": [
-        -560,
-        210
+        -386.4,
+        240
       ],
       "startBinding": {
         "elementId": "mock_box",
         "focus": 0,
-        "gap": 1
+        "gap": 1,
+        "fixedPoint": [
+          1,
+          0.5
+        ]
       },
       "endBinding": {
         "elementId": "collector_box",
         "focus": 0,
-        "gap": 1
+        "gap": 1,
+        "fixedPoint": [
+          0.75,
+          0
+        ]
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
@@ -1131,23 +1191,23 @@
     {
       "id": "label_kafka_collector",
       "type": "text",
-      "x": 50.9,
-      "y": 251,
+      "x": 10.0,
+      "y": 248,
       "width": 69.7,
       "height": 18,
       "angle": 0,
-      "strokeColor": "#495057",
+      "strokeColor": "#fab005",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 80,
       "groupIds": [],
       "frameId": null,
       "roundness": null,
       "seed": 910001,
-      "version": 1,
+      "version": 2,
       "versionNonce": 910002,
       "isDeleted": false,
       "boundElements": null,
@@ -1166,23 +1226,23 @@
     {
       "id": "label_kafka_etl",
       "type": "text",
-      "x": 193.3,
-      "y": 251,
+      "x": 187.0,
+      "y": 248,
       "width": 69.7,
       "height": 18,
       "angle": 0,
-      "strokeColor": "#495057",
+      "strokeColor": "#fab005",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 80,
       "groupIds": [],
       "frameId": null,
       "roundness": null,
       "seed": 910003,
-      "version": 1,
+      "version": 2,
       "versionNonce": 910004,
       "isDeleted": false,
       "boundElements": null,
@@ -1201,23 +1261,23 @@
     {
       "id": "label_kafka_api",
       "type": "text",
-      "x": 370.7,
-      "y": 221,
+      "x": 280.0,
+      "y": 285,
       "width": 69.7,
       "height": 18,
       "angle": 0,
-      "strokeColor": "#495057",
+      "strokeColor": "#fab005",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 80,
       "groupIds": [],
       "frameId": null,
       "roundness": null,
       "seed": 910005,
-      "version": 1,
+      "version": 2,
       "versionNonce": 910006,
       "isDeleted": false,
       "boundElements": null,
@@ -1236,23 +1296,23 @@
     {
       "id": "label_postgres_api",
       "type": "text",
-      "x": 370.7,
-      "y": 281,
+      "x": 400.0,
+      "y": 295,
       "width": 69.7,
       "height": 18,
       "angle": 0,
-      "strokeColor": "#495057",
+      "strokeColor": "#2f9e44",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 80,
       "groupIds": [],
       "frameId": null,
       "roundness": null,
       "seed": 910007,
-      "version": 1,
+      "version": 2,
       "versionNonce": 910008,
       "isDeleted": false,
       "boundElements": null,
@@ -1271,23 +1331,23 @@
     {
       "id": "label_mock_collector",
       "type": "text",
-      "x": 50.9,
-      "y": 301,
+      "x": 200.0,
+      "y": 305,
       "width": 69.7,
       "height": 18,
       "angle": 0,
-      "strokeColor": "#495057",
+      "strokeColor": "#868e96",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 80,
       "groupIds": [],
       "frameId": null,
       "roundness": null,
       "seed": 910009,
-      "version": 1,
+      "version": 2,
       "versionNonce": 910010,
       "isDeleted": false,
       "boundElements": null,
@@ -1311,12 +1371,12 @@
       "width": 139.3,
       "height": 80,
       "angle": 0,
-      "strokeColor": "#495057",
+      "strokeColor": "#868e96",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
-      "strokeWidth": 2,
+      "strokeWidth": 1,
       "strokeStyle": "solid",
-      "roughness": 1,
+      "roughness": 0,
       "opacity": 70,
       "groupIds": [],
       "frameId": null,

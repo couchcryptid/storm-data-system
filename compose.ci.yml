@@ -1,12 +1,12 @@
 services:
   collector:
     build: !reset null
-    image: couchcryptid/storm-data-collector:latest
+    image: brendanvinson/storm-data-collector:latest
 
   etl:
     build: !reset null
-    image: couchcryptid/storm-data-etl:latest
+    image: brendanvinson/storm-data-etl:latest
 
   api:
     build: !reset null
-    image: couchcryptid/storm-data-api:latest
+    image: brendanvinson/storm-data-api:latest

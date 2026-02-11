@@ -1,0 +1,56 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run nightly at 06:00 UTC to catch cross-service regressions.
+    - cron: "0 6 * * *"
+
+jobs:
+  e2e:
+    name: E2E & UAT against published images
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: e2e/go.mod
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: Install Playwright browsers
+        working-directory: uat
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Start stack with published images
+        run: make up-ci
+
+      - name: Run E2E tests
+        run: make test-e2e-only
+
+      - name: Run UAT tests
+        run: make test-uat-only
+
+      - name: Collect logs on failure
+        if: failure()
+        run: docker compose -f compose.yml -f compose.ci.yml logs --tail=200 > docker-logs.txt
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-logs
+          path: docker-logs.txt
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f compose.yml -f compose.ci.yml down -v --remove-orphans

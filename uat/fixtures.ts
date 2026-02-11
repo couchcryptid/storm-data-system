@@ -12,6 +12,7 @@ export interface FilterOptions {
   type?: string;
   state?: string;
   severity?: string;
+  county?: string;
 }
 
 /** Set one or more filter dropdowns and wait briefly for client-side re-render. */
@@ -24,6 +25,9 @@ export async function applyFilters(page: Page, filters: FilterOptions): Promise<
   }
   if (filters.severity !== undefined) {
     await page.locator('#filter-severity').selectOption(filters.severity);
+  }
+  if (filters.county !== undefined) {
+    await page.locator('#filter-county').selectOption(filters.county);
   }
   // Filters are applied synchronously via DOM manipulation,
   // but give the browser a rendering tick.

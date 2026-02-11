@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storm Data Dashboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --text: #e1e4ed;
+      --text-dim: #8b8fa3;
+      --hail: #38bdf8;
+      --tornado: #f87171;
+      --wind: #a78bfa;
+      --accent: #60a5fa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    header h1 span { color: var(--accent); }
+    .status {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+    .status.ok { color: #4ade80; }
+    .status.err { color: var(--tornado); }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 16px 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .stat-card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .stat-card .sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+    .stat-card.hail .value { color: var(--hail); }
+    .stat-card.tornado .value { color: var(--tornado); }
+    .stat-card.wind .value { color: var(--wind); }
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 0 24px 24px;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    #map { height: 480px; }
+    .table-wrap {
+      max-height: 480px;
+      overflow-y: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead th {
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td {
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge.hail { background: rgba(56,189,248,0.15); color: var(--hail); }
+    .badge.tornado { background: rgba(248,113,113,0.15); color: var(--tornado); }
+    .badge.wind { background: rgba(167,139,250,0.15); color: var(--wind); }
+    .severity-minor { color: #86efac; }
+    .severity-moderate { color: #fde047; }
+    .severity-severe { color: #fb923c; }
+    .severity-extreme { color: #f87171; }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .controls label { font-size: 12px; color: var(--text-dim); }
+    .controls select, .controls input {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 13px;
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: var(--text-dim);
+    }
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><span>Storm Data</span> Dashboard</h1>
+    <div id="status" class="status">Connecting...</div>
+  </header>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="label">Total Reports</div>
+      <div class="value" id="total">--</div>
+      <div class="sub" id="date-range"></div>
+    </div>
+    <div class="stat-card hail">
+      <div class="label">Hail</div>
+      <div class="value" id="hail-count">--</div>
+      <div class="sub" id="hail-max"></div>
+    </div>
+    <div class="stat-card tornado">
+      <div class="label">Tornado</div>
+      <div class="value" id="tornado-count">--</div>
+      <div class="sub" id="tornado-max"></div>
+    </div>
+    <div class="stat-card wind">
+      <div class="label">Wind</div>
+      <div class="value" id="wind-count">--</div>
+      <div class="sub" id="wind-max"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="panel">
+      <div class="panel-header">Event Map</div>
+      <div id="map"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">Reports</div>
+      <div class="controls">
+        <label>Type:
+          <select id="filter-type">
+            <option value="">All</option>
+            <option value="hail">Hail</option>
+            <option value="tornado">Tornado</option>
+            <option value="wind">Wind</option>
+          </select>
+        </label>
+        <label>State:
+          <select id="filter-state"><option value="">All</option></select>
+        </label>
+        <label>Severity:
+          <select id="filter-severity">
+            <option value="">All</option>
+            <option value="minor">Minor</option>
+            <option value="moderate">Moderate</option>
+            <option value="severe">Severe</option>
+            <option value="extreme">Extreme</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Location</th>
+              <th>State</th>
+              <th>Magnitude</th>
+              <th>Severity</th>
+              <th>Time (UTC)</th>
+            </tr>
+          </thead>
+          <tbody id="report-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:8080/query'
+  : `${window.location.protocol}//${window.location.hostname}:8080/query`;
+
+const COLORS = { hail: '#38bdf8', tornado: '#f87171', wind: '#a78bfa' };
+
+function esc(text) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+const map = L.map('map', { zoomControl: true }).setView([39.5, -98.5], 5);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+let allReports = [];
+let markers = L.layerGroup().addTo(map);
+
+async function gql(query) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  if (json.errors) throw new Error(json.errors.map(e => e.message).join(', '));
+  return json.data;
+}
+
+function fmtMag(r) {
+  const m = r.measurement;
+  if (!m.magnitude) return '--';
+  if (m.unit === 'in') return `${m.magnitude}"`;
+  if (m.unit === 'mph') return `${m.magnitude} mph`;
+  if (m.unit === 'f_scale') return `EF${m.magnitude}`;
+  return `${m.magnitude} ${m.unit}`;
+}
+
+function fmtTime(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  return d.toISOString().slice(0, 16).replace('T', ' ');
+}
+
+function fmtMaxMag(m) {
+  if (!m) return '';
+  if (m.unit === 'in') return `max ${m.magnitude}"`;
+  if (m.unit === 'mph') return `max ${m.magnitude} mph`;
+  if (m.unit === 'f_scale') return `max EF${m.magnitude}`;
+  return `max ${m.magnitude}`;
+}
+
+function renderStats(agg) {
+  const byType = {};
+  for (const g of agg.byEventType) byType[g.eventType] = g;
+
+  document.getElementById('total').textContent = agg.totalCount;
+  for (const type of ['hail', 'tornado', 'wind']) {
+    const g = byType[type];
+    document.getElementById(`${type}-count`).textContent = g ? g.count : 0;
+    document.getElementById(`${type}-max`).textContent = g ? fmtMaxMag(g.maxMeasurement) : '';
+  }
+}
+
+function createMarker(r) {
+  const color = COLORS[r.eventType] || '#fff';
+  const sev = r.measurement.severity;
+  let radius = 5;
+  if (sev === 'moderate') radius = 7;
+  if (sev === 'severe') radius = 9;
+  if (sev === 'extreme') radius = 12;
+
+  return L.circleMarker([r.geo.lat, r.geo.lon], {
+    radius,
+    fillColor: color,
+    color: color,
+    weight: 1,
+    opacity: 0.8,
+    fillOpacity: 0.5
+  }).bindPopup(`
+    <div style="font-size:13px;min-width:180px">
+      <strong>${esc(r.eventType.toUpperCase())}</strong> &mdash; ${fmtMag(r)}<br>
+      <span style="color:#888">${esc(r.location.name || r.location.raw)}, ${esc(r.location.state)}</span><br>
+      <span style="color:#888">${esc(r.location.county)} County</span><br>
+      <span style="color:#888">${fmtTime(r.beginTime)}</span><br>
+      ${r.comments ? `<em style="color:#aaa;font-size:12px">${esc(r.comments)}</em>` : ''}
+    </div>
+  `);
+}
+
+function applyFilters() {
+  const typeF = document.getElementById('filter-type').value;
+  const stateF = document.getElementById('filter-state').value;
+  const sevF = document.getElementById('filter-severity').value;
+
+  markers.clearLayers();
+  const tbody = document.getElementById('report-body');
+  tbody.innerHTML = '';
+
+  const filtered = allReports.filter(r => {
+    if (typeF && r.eventType !== typeF) return false;
+    if (stateF && r.location.state !== stateF) return false;
+    if (sevF && r.measurement.severity !== sevF) return false;
+    return true;
+  });
+
+  for (const r of filtered) {
+    markers.addLayer(createMarker(r));
+    const sev = r.measurement.severity || '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="badge ${esc(r.eventType)}">${esc(r.eventType)}</span></td>
+      <td>${esc(r.location.name || r.location.raw)}</td>
+      <td>${esc(r.location.state)}</td>
+      <td>${fmtMag(r)}</td>
+      <td><span class="severity-${esc(sev)}">${esc(sev) || '--'}</span></td>
+      <td>${fmtTime(r.beginTime)}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function populateStateFilter(reports) {
+  const states = [...new Set(reports.map(r => r.location.state))].sort();
+  const sel = document.getElementById('filter-state');
+  for (const s of states) {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    sel.appendChild(opt);
+  }
+}
+
+async function fetchAllReports() {
+  let all = [];
+  let offset = 0;
+  const limit = 20;
+  let hasMore = true;
+
+  while (hasMore) {
+    const data = await gql(`{
+      stormReports(filter: {
+        timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" }
+        sortBy: BEGIN_TIME
+        sortOrder: DESC
+        limit: ${limit}
+        offset: ${offset}
+      }) {
+        totalCount hasMore
+        reports {
+          id eventType
+          geo { lat lon }
+          measurement { magnitude unit severity }
+          beginTime
+          location { raw name state county direction distance }
+          comments
+          sourceOffice
+        }
+        aggregations {
+          totalCount
+          byEventType { eventType count maxMeasurement { magnitude unit } }
+          byState { state count }
+        }
+      }
+    }`);
+    const sr = data.stormReports;
+    all = all.concat(sr.reports);
+    hasMore = sr.hasMore;
+    offset += limit;
+
+    // Use aggregations from first page (they cover the full result set)
+    if (offset === limit) renderStats(sr.aggregations);
+  }
+  return all;
+}
+
+async function init() {
+  const statusEl = document.getElementById('status');
+  try {
+    statusEl.textContent = 'Loading data...';
+    allReports = await fetchAllReports();
+    populateStateFilter(allReports);
+    applyFilters();
+
+    // Fit map to markers
+    if (allReports.length > 0) {
+      const bounds = L.latLngBounds(allReports.map(r => [r.geo.lat, r.geo.lon]));
+      map.fitBounds(bounds, { padding: [30, 30] });
+    }
+
+    statusEl.textContent = `${allReports.length} reports loaded`;
+    statusEl.className = 'status ok';
+
+    const dateRange = document.getElementById('date-range');
+    if (allReports.length > 0) {
+      const times = allReports.map(r => new Date(r.beginTime)).sort((a, b) => a - b);
+      dateRange.textContent = `${times[0].toISOString().slice(0, 10)} — ${times[times.length - 1].toISOString().slice(0, 10)}`;
+    }
+  } catch (err) {
+    statusEl.textContent = `Error: ${err.message}`;
+    statusEl.className = 'status err';
+    console.error(err);
+  }
+}
+
+document.getElementById('filter-type').addEventListener('change', applyFilters);
+document.getElementById('filter-state').addEventListener('change', applyFilters);
+document.getElementById('filter-severity').addEventListener('change', applyFilters);
+
+init();
+</script>
+</body>
+</html>

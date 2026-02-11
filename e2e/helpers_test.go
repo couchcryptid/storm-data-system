@@ -29,14 +29,14 @@ func ensureDataPropagated(t *testing.T) {
 		for time.Now().Before(deadline) {
 			result := graphQLQuery(t, query)
 			lastCount = result.Data.StormReports.TotalCount
-			if lastCount >= 9 {
+			if lastCount >= expectedTotal {
 				t.Logf("data propagated: %d records found", lastCount)
 				return
 			}
-			t.Logf("waiting for data propagation: %d/9 records", lastCount)
+			t.Logf("waiting for data propagation: %d/%d records", lastCount, expectedTotal)
 			time.Sleep(5 * time.Second)
 		}
-		errDataReady = fmt.Errorf("data did not propagate: got %d/9 records", lastCount)
+		errDataReady = fmt.Errorf("data did not propagate: got %d/%d records", lastCount, expectedTotal)
 	})
 	if errDataReady != nil {
 		t.Fatal(errDataReady)

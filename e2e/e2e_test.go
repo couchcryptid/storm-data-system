@@ -5,10 +5,10 @@ import (
 )
 
 const (
-	expectedTotal   = 9 // 3 hail + 3 tornado + 3 wind
-	expectedHail    = 3
-	expectedTornado = 3
-	expectedWind    = 3
+	expectedTotal   = 271 // 79 hail + 149 tornado + 43 wind (NOAA SPC 2024-04-26)
+	expectedHail    = 79
+	expectedTornado = 149
+	expectedWind    = 43
 )
 
 const wideTimeRange = `timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" }`
@@ -91,17 +91,17 @@ func TestStateAggregations(t *testing.T) {
 		}
 	}
 
-	if len(stateMap) != 3 {
-		t.Errorf("expected 3 states, got %d: %v", len(stateMap), stateMap)
+	if len(stateMap) != 11 {
+		t.Errorf("expected 11 states, got %d: %v", len(stateMap), stateMap)
 	}
-	if stateMap["TX"] != 5 {
-		t.Errorf("TX count = %d, want 5", stateMap["TX"])
+	if stateMap["NE"] != 100 {
+		t.Errorf("NE count = %d, want 100", stateMap["NE"])
 	}
-	if stateMap["OK"] != 3 {
-		t.Errorf("OK count = %d, want 3", stateMap["OK"])
+	if stateMap["IA"] != 69 {
+		t.Errorf("IA count = %d, want 69", stateMap["IA"])
 	}
-	if stateMap["NE"] != 1 {
-		t.Errorf("NE count = %d, want 1", stateMap["NE"])
+	if stateMap["TX"] != 39 {
+		t.Errorf("TX count = %d, want 39", stateMap["TX"])
 	}
 }
 
@@ -155,11 +155,23 @@ func TestSpotCheckHailReport(t *testing.T) {
 	result := graphQLQuery(t, query)
 	sr := result.Data.StormReports
 
-	if sr.TotalCount != 1 {
-		t.Fatalf("expected 1 San Saba hail report, got %d", sr.TotalCount)
+	if sr.TotalCount < 1 {
+		t.Fatalf("expected at least 1 San Saba hail report, got %d", sr.TotalCount)
 	}
 
-	r := sr.Reports[0]
+	// Find the specific 1.25" report among San Saba results.
+	var r stormReport
+	found := false
+	for _, rpt := range sr.Reports {
+		if rpt.Measurement.Magnitude == 1.25 {
+			r = rpt
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("expected a San Saba hail report with magnitude 1.25")
+	}
 	if r.EventType != "hail" {
 		t.Errorf("eventType = %q, want hail", r.EventType)
 	}

@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'storm-collector'
+    scrape_interval: 60s
+    static_configs:
+      - targets: ['collector:3000']
+
+  - job_name: 'storm-etl'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['etl:8080']
+
+  - job_name: 'storm-api'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['api:8080']
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

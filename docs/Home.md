@@ -19,6 +19,8 @@ Three services, two Kafka topics, one database. Data flows left to right.
 - [[Development]] -- Multi-repo workflow, prerequisites, and conventions
 - [[Testing]] -- Testing strategy from unit tests to E2E validation
 - [[Observability]] -- Health checks, Prometheus metrics, and structured logging
+- [[Common Tasks]] -- Step-by-step guides for adding fields, enrichment rules, and mock data
+- [[Troubleshooting]] -- Common issues and solutions
 
 ## Repositories
 

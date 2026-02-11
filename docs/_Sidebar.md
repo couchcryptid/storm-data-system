@@ -10,3 +10,5 @@
 - [[Development]]
 - [[Testing]]
 - [[Observability]]
+- [[Common Tasks]]
+- [[Troubleshooting]]

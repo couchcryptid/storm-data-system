@@ -34,6 +34,8 @@ Configuration is validated at startup using **Zod**. Invalid values cause an imm
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
 | `LOG_FORMAT` | `json` | `json` or `text` |
 | `SHUTDOWN_TIMEOUT` | `10s` | Graceful shutdown deadline (Go duration) |
+| `BATCH_SIZE` | `50` | Messages per batch (1--1000) |
+| `BATCH_FLUSH_INTERVAL` | `500ms` | Max wait before flushing a partial batch |
 
 ### Mapbox Geocoding (Optional)
 
@@ -58,6 +60,8 @@ Configuration is loaded in `internal/config/config.go` and returns `(*Config, er
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
 | `LOG_FORMAT` | `json` | `json` or `text` |
 | `SHUTDOWN_TIMEOUT` | `10s` | Graceful shutdown deadline |
+| `BATCH_SIZE` | `50` | Kafka messages per batch (1--1000) |
+| `BATCH_FLUSH_INTERVAL` | `500ms` | Max wait before flushing a partial batch |
 
 ## Unified Stack Overrides
 

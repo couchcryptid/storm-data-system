@@ -132,12 +132,6 @@ The stack runs Apache Kafka 3.7.0 in KRaft mode (no ZooKeeper). Configuration is
 
 Services within Docker use `kafka:9092` (internal PLAINTEXT). Host tools use `localhost:29092`.
 
-## Production Considerations
+## Production
 
-- Replace single-node Kafka with a managed service (Confluent Cloud, Amazon MSK) or multi-broker cluster
-- Set `KAFKA_AUTO_CREATE_TOPICS_ENABLE=false` and pre-create topics with appropriate partition counts
-- Use a managed PostgreSQL with connection pooling (PgBouncer)
-- Configure unique `KAFKA_GROUP_ID` per environment
-- Set `LOG_FORMAT=json` for structured log aggregation
-- Replace the mock NOAA server with the real NOAA SPC URL
-- See [[Architecture]] for GCP cloud cost analysis and deployment options
+See [[Architecture]] for GCP cloud cost analysis, deployment options (Cloud Run, GKE, Pub/Sub), and the improvement roadmap. For production, replace the mock NOAA server with the real NOAA SPC URL via `REPORTS_BASE_URL`.

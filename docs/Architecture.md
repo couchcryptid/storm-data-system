@@ -92,8 +92,6 @@ For the complete data model and message shapes at each stage, see [[Data Model]]
 
 ### Medium-term
 
-**Batch processing in ETL** -- Currently processes one message at a time. Batching (e.g., 100 messages per commit) would improve throughput significantly. The Kafka writer already supports batch writes.
-
 **Connection pooling for Mapbox** -- The optional geocoding enrichment makes one HTTP call per event. A connection pool, circuit breaker, and rate limiter would improve resilience when geocoding is enabled.
 
 **PostgreSQL partitioning** -- Partition the `storm_reports` table by `begin_time` (monthly or yearly). This would improve query performance for time-range filters and simplify data retention.

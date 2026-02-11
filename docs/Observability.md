@@ -1,12 +1,6 @@
 # Observability
 
-Unified view of health checks, Prometheus metrics, and structured logging across all storm data services. Each service exposes the same operational endpoints and follows consistent patterns for metrics and logging.
-
-For service-specific observability details:
-
-- [Collector Metrics](https://github.com/couchcryptid/storm-data-collector/wiki/Metrics) and [Logging](https://github.com/couchcryptid/storm-data-collector/wiki/Logging)
-- [ETL Performance](https://github.com/couchcryptid/storm-data-etl/wiki/Performance) (includes monitoring queries)
-- [API Performance](https://github.com/couchcryptid/storm-data-api/wiki/Performance) (includes monitoring queries)
+Unified view of health checks, Prometheus metrics, and structured logging across all storm data services. Each service exposes the same operational endpoints and follows consistent patterns.
 
 ## Health Endpoints
 
@@ -30,79 +24,15 @@ In the unified Docker Compose stack, readiness determines whether dependent serv
 
 ## Prometheus Metrics
 
-### Collector (`storm_collector_*`)
+Each service uses a namespaced prefix to avoid metric collisions:
 
-**Package**: prom-client (Node.js)
+| Service | Prefix | Library | Full reference |
+|---------|--------|---------|----------------|
+| Collector | `storm_collector_` | prom-client (Node.js) | [Collector README](https://github.com/couchcryptid/storm-data-collector#prometheus-metrics) |
+| ETL | `storm_etl_` | prometheus/client_golang | [ETL README](https://github.com/couchcryptid/storm-data-etl#prometheus-metrics) |
+| API | `storm_api_` | prometheus/client_golang | [API README](https://github.com/couchcryptid/storm-data-api#prometheus-metrics) |
 
-#### Counters
-
-| Metric | Labels | Description |
-|--------|--------|-------------|
-| `storm_collector_job_runs_total` | `status` (`success`, `failure`) | Total scheduled job runs |
-| `storm_collector_rows_processed_total` | `report_type` (`torn`, `hail`, `wind`) | CSV rows parsed |
-| `storm_collector_rows_published_total` | `report_type` | Rows published to Kafka |
-| `storm_collector_retry_total` | `report_type` | HTTP 5xx retry attempts |
-| `storm_collector_kafka_publish_retries_total` | `topic` | Kafka publish retry attempts |
-
-#### Histograms
-
-| Metric | Labels | Buckets (s) | Description |
-|--------|--------|-------------|-------------|
-| `storm_collector_job_duration_seconds` | -- | 1, 5, 10, 30, 60, 120 | Full job duration |
-| `storm_collector_csv_fetch_duration_seconds` | `report_type` | 0.5, 1, 2, 5, 10, 30 | Single CSV fetch + process |
-
-Also includes default Node.js runtime metrics (`nodejs_*`, `process_*`).
-
-### ETL (`storm_etl_*`)
-
-**Package**: prometheus/client_golang
-
-#### Pipeline Metrics
-
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `storm_etl_messages_consumed_total` | Counter | `topic` | Messages consumed from source topic |
-| `storm_etl_messages_produced_total` | Counter | `topic` | Messages produced to sink topic |
-| `storm_etl_transform_errors_total` | Counter | `error_type` | Transform failures |
-| `storm_etl_processing_duration_seconds` | Histogram | -- | Per-message processing time (1ms--5s buckets) |
-| `storm_etl_pipeline_running` | Gauge | -- | 1 when pipeline loop is active |
-
-#### Geocoding Metrics (when enabled)
-
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `storm_etl_geocode_enabled` | Gauge | -- | 1 if geocoding feature is active |
-| `storm_etl_geocode_requests_total` | Counter | `method`, `outcome` | API requests by method (forward/reverse) and outcome |
-| `storm_etl_geocode_api_duration_seconds` | Histogram | `method` | Mapbox API latency (10ms--5s buckets) |
-| `storm_etl_geocode_cache_total` | Counter | `method`, `result` | Cache hits/misses |
-
-### API (`storm_api_*`)
-
-**Package**: prometheus/client_golang
-
-#### HTTP Metrics
-
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `storm_api_http_requests_total` | Counter | `method`, `path`, `status` | Total HTTP requests |
-| `storm_api_http_request_duration_seconds` | Histogram | `method`, `path` | Request duration (1ms--5s buckets) |
-
-#### Kafka Consumer Metrics
-
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `storm_api_kafka_messages_consumed_total` | Counter | `topic` | Messages consumed |
-| `storm_api_kafka_consumer_errors_total` | Counter | `topic`, `error_type` | Consumer errors |
-| `storm_api_kafka_consumer_running` | Gauge | `topic` | 1 when consumer is active |
-
-#### Database Metrics
-
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `storm_api_db_query_duration_seconds` | Histogram | `operation` | Query duration |
-| `storm_api_db_pool_connections` | Gauge | `state` | Connection pool stats |
-
-## Prometheus Scrape Configuration
+### Scrape Configuration
 
 ```yaml
 scrape_configs:
@@ -137,9 +67,6 @@ rate(storm_etl_messages_consumed_total[1m])
 
 # API request rate
 rate(storm_api_http_requests_total[1m])
-
-# Data lag (via GraphQL dataLagMinutes field, or approximate via metrics)
-time() - storm_api_kafka_messages_consumed_total
 ```
 
 ### Latency
@@ -174,47 +101,27 @@ rate(storm_collector_job_runs_total{status="failure"}[1h])
 # API database connection pool utilization
 storm_api_db_pool_connections{state="active"} / storm_api_db_pool_connections{state="total"}
 
-# Geocoding cache hit rate (ETL)
+# Geocoding cache hit rate (ETL, when enabled)
 rate(storm_etl_geocode_cache_total{result="hit"}[5m])
   / rate(storm_etl_geocode_cache_total[5m])
 ```
 
 ## Structured Logging
 
-### Log Levels
+All services support configurable log levels via `LOG_LEVEL`:
 
-All services support the same log levels:
+| Level | Usage |
+|-------|-------|
+| `debug` | Detailed diagnostics (message offsets, individual inserts) |
+| `info` | General events (default) -- job runs, request handling, startup/shutdown |
+| `warn` | Retries, backoff, skipped messages, degraded geocoding |
+| `error` | Failed operations |
 
-| Level | Collector (Pino) | ETL (slog) | API (slog) |
-|-------|-----------------|------------|------------|
-| `debug` | Detailed diagnostics | Detailed diagnostics | Detailed diagnostics |
-| `info` | General events (default) | General events (default) | General events (default) |
-| `warn` | Retries, skipped messages | Backoff, degraded geocoding | Skipped messages |
-| `error` | Failed operations | Failed operations | Failed operations |
-
-### Log Format
-
-| Environment | Collector | ETL / API |
-|-------------|-----------|-----------|
-| Development | Pretty-printed (pino-pretty) | `LOG_FORMAT=text` |
-| Production | JSON | `LOG_FORMAT=json` |
-
-### What Gets Logged
-
-| Event | Service | Level | Key Fields |
-|-------|---------|-------|------------|
-| Job start/complete | Collector | info | `duration`, `status`, `report_types` |
-| CSV fetch | Collector | info | `url`, `type`, `statusCode`, `rowCount` |
-| HTTP retry | Collector | warn | `url`, `attempt`, `statusCode` |
-| Message consumed | ETL | debug | `topic`, `partition`, `offset` |
-| Transform error | ETL | warn | `event_id`, `error` |
-| Geocoding failure | ETL | warn | `event_id`, `method`, `error` |
-| Pipeline backoff | ETL | warn | `delay`, `consecutive_failures` |
-| HTTP request | API | info | `method`, `path`, `status`, `duration` |
-| Kafka message consumed | API | debug | `topic`, `partition`, `offset` |
-| DB insert | API | debug | `event_id`, `duration` |
-| Poison pill skipped | ETL / API | warn | `topic`, `partition`, `offset`, `error` |
-| Shutdown | All | info | `reason` |
+| Service | Library | Format Control |
+|---------|---------|---------------|
+| Collector | Pino | `LOG_LEVEL` (JSON default, pino-pretty in dev) |
+| ETL | `log/slog` | `LOG_LEVEL` + `LOG_FORMAT` (`json` or `text`) |
+| API | `log/slog` | `LOG_LEVEL` + `LOG_FORMAT` (`json` or `text`) |
 
 ## Data Lag Monitoring
 

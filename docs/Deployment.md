@@ -39,6 +39,9 @@ make up
 | `collector` | `../storm-data-collector` | 3000 | 3000 | `/healthz` |
 | `etl` | `../storm-data-etl` | 8081 | 8080 | `/healthz` |
 | `api` | `../storm-data-api` | 8080 | 8080 | `/healthz` |
+| `dashboard` | `nginx:1-alpine` | 8000 | 80 | HTTP GET `/` |
+| `prometheus` | `prom/prometheus:v3.2.1` | 9090 | 9090 | `promtool check healthy` |
+| `kafka-ui` | `provectuslabs/kafka-ui:latest` | 8082 | 8080 | `/actuator/health` |
 
 ### Startup Order
 
@@ -134,4 +137,4 @@ Services within Docker use `kafka:9092` (internal PLAINTEXT). Host tools use `lo
 
 ## Production
 
-See [[Architecture]] for GCP cloud cost analysis, deployment options (Cloud Run, GKE, Pub/Sub), and the improvement roadmap. For production, replace the mock NOAA server with the real NOAA SPC URL via `REPORTS_BASE_URL`.
+See [[Architecture]] for the improvement roadmap. For production, replace the mock NOAA server with the real NOAA SPC URL via `REPORTS_BASE_URL`.

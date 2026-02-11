@@ -10,7 +10,8 @@ Three services, two Kafka topics, one database. Data flows left to right.
 
 ## Pages
 
-- [[Architecture]] -- System design, tradeoffs, improvement roadmap, and GCP cost analysis
+- [[Demo]] -- Running the stack, dashboard, Prometheus, Kafka UI, and demo walkthrough
+- [[Architecture]] -- System design, tradeoffs, and improvement roadmap
 - [[Data Flow]] -- End-to-end data journey from NOAA CSV to GraphQL response
 - [[Data Model]] -- Message shapes, event types, field mapping, and database schema
 - [[API Reference]] -- GraphQL types, queries, filters, and aggregations

@@ -26,10 +26,11 @@ Time,Size,Location,County,State,Lat,Lon,Comments
 1510,125,8 ESE Chappel,San Saba,TX,31.02,-98.44,1.25 inch hail reported at Colorado Bend State Park. (SJT)
 ```
 
-**Output**: One Kafka message per CSV row, published to `raw-weather-reports`. The collector preserves the CSV column names as-is (capitalized keys) and adds a `type` field:
+**Output**: One Kafka message per CSV row, published to `raw-weather-reports`. The collector preserves the CSV column names as-is (capitalized keys) and adds an `EventType` field:
 
 ```json
 {
+  "EventType": "hail",
   "Time": "1510",
   "Size": "125",
   "Location": "8 ESE Chappel",
@@ -60,7 +61,7 @@ The **ETL** (Go) consumes from `raw-weather-reports`, applies an 11-step enrichm
 5. Derive severity (`minor`, `moderate`, `severe`, `extreme`) based on type and magnitude
 6. Extract NWS source office code from comments (e.g., `(SJT)` at end of string)
 7. Parse location string (`8 ESE Chappel` becomes distance=8, direction=ESE, name=Chappel)
-8. Derive time bucket (truncate `begin_time` to the hour in UTC)
+8. Derive time bucket (truncate `event_time` to the hour in UTC)
 9. Set `processed_at` timestamp
 10. Geocode via Mapbox (optional, feature-flagged)
 11. Serialize to JSON
@@ -69,17 +70,15 @@ The **ETL** (Go) consumes from `raw-weather-reports`, applies an 11-step enrichm
 
 ```json
 {
-  "id": "a3f8b2c1e7d9...",
-  "type": "hail",
+  "id": "hail-a3f8b2c1e7d9...",
+  "event_type": "hail",
   "geo": { "lat": 31.02, "lon": -98.44 },
   "measurement": {
     "magnitude": 1.25,
     "unit": "in",
     "severity": "moderate"
   },
-  "begin_time": "2026-01-01T15:10:00Z",
-  "end_time": "2026-01-01T15:10:00Z",
-  "source": "spc",
+  "event_time": "2026-01-01T15:10:00Z",
   "location": {
     "raw": "8 ESE Chappel",
     "name": "Chappel",
@@ -103,9 +102,9 @@ The **ETL** (Go) consumes from `raw-weather-reports`, applies an 11-step enrichm
 
 When geocoding is enabled, the ETL populates `geocoding.formatted_address`, `geocoding.place_name`, `geocoding.confidence`, and `geocoding.source` with Mapbox results. When disabled, the `geocoding` object is omitted (all fields are zero-valued with `omitempty`).
 
-**Kafka headers**: `type` (event type) and `processed_at` (RFC 3339 timestamp).
+**Kafka headers**: `event_type` (event type) and `processed_at` (RFC 3339 timestamp).
 
-**ID generation**: Deterministic SHA-256 hash of `type|state|lat|lon|time`. The same raw event always produces the same ID, enabling idempotent processing at every downstream stage.
+**ID generation**: Deterministic SHA-256 hash of `event_type|state|lat|lon|time|magnitude`. The same raw event always produces the same ID, enabling idempotent processing at every downstream stage.
 
 ## Stage 3: Persistence (API Consumer)
 

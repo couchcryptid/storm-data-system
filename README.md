@@ -23,6 +23,8 @@ Mock Server (CSV) --> Collector --> Kafka (raw-weather-reports)
 
 E2E tests query the GraphQL API to verify that data flows correctly through the entire pipeline.
 
+The stack also includes a **dashboard** (interactive Leaflet map with filters and timeline), **Prometheus** for metrics, and **Kafka UI** for topic inspection.
+
 ## Quick Start
 
 ### Prerequisites
@@ -71,6 +73,9 @@ make clean           # Stop containers + remove volumes
 | `collector`    | `../storm-data-collector`    | 3000      | 3000          | `/healthz`   |
 | `etl`          | `../storm-data-etl`  | 8081      | 8080          | `/healthz`   |
 | `api`          | `../storm-data-api`  | 8080      | 8080          | `/healthz`   |
+| `dashboard`    | `nginx:1-alpine`     | 8000      | 80            | HTTP GET `/` |
+| `prometheus`   | `prom/prometheus:v3.2.1` | 9090  | 9090          | `promtool check healthy` |
+| `kafka-ui`     | `provectuslabs/kafka-ui:latest` | 8082 | 8080     | `/actuator/health` |
 
 ## Kafka Topics
 
@@ -87,13 +92,13 @@ The collector's `REPORTS_BASE_URL` is configured to point to the mock server. CS
 
 ### Test Fixtures
 
-| File                       | Records | States  | Description                |
-| -------------------------- | ------- | ------- | -------------------------- |
-| `260101_rpts_hail.csv`     | 3       | TX      | Hail reports (100--175 hundredths of inch) |
-| `260101_rpts_torn.csv`     | 3       | OK, NE, TX | Tornado reports (UNK, EF1) |
-| `260101_rpts_wind.csv`     | 3       | OK, TX  | Wind reports (UNK, 65, 70 mph) |
+| File                       | Records | Description                |
+| -------------------------- | ------- | -------------------------- |
+| `240426_rpts_hail.csv`     | 79      | Hail reports |
+| `240426_rpts_torn.csv`     | 149     | Tornado reports |
+| `240426_rpts_wind.csv`     | 43      | Wind reports |
 
-Total: **9 records** across **3 states** (TX, OK, NE).
+Total: **271 records** across **11 states** (real NOAA SPC data from April 26, 2024).
 
 ## E2E Tests
 
@@ -102,14 +107,27 @@ Go test suite in `e2e/` that runs against the live stack. Tests use `sync.Once` 
 | Test                       | Description                                                |
 | -------------------------- | ---------------------------------------------------------- |
 | `TestServicesHealthy`      | All services respond to `/healthz`                         |
-| `TestDataPropagation`      | Data flows through the full pipeline (polls until 9 records appear) |
-| `TestReportCounts`         | 3 hail + 3 tornado + 3 wind via `byType` aggregation      |
-| `TestStateAggregations`    | TX=5, OK=3, NE=1 with county breakdowns                   |
+| `TestDataPropagation`      | Data flows through the full pipeline (polls until 271 records appear) |
+| `TestReportCounts`         | 79 hail + 149 tornado + 43 wind via `byType` aggregation  |
+| `TestStateAggregations`    | State and county breakdowns match expected counts          |
 | `TestReportEnrichment`     | All reports have ID, unit, timeBucket, processedAt, geo    |
 | `TestSpotCheckHailReport`  | San Saba TX hail: magnitude=1.25, unit=in, sourceOffice=SJT |
 | `TestHourlyAggregation`    | Hourly bucket counts sum to totalCount                     |
-| `TestTypeFilter`           | Filtering by `tornado` returns exactly 3 reports           |
-| `TestLastUpdated`          | `lastUpdated` and `dataLagMinutes` are populated           |
+| `TestEventTypeFilter`      | Filtering by `tornado` returns only tornado reports        |
+| `TestMeta`                 | `lastUpdated` and `dataLagMinutes` are populated           |
+| `TestPagination`           | Limit/offset pagination returns distinct pages             |
+| `TestSeverityFilter`       | Filtering by severity narrows results correctly            |
+| `TestSortByMagnitude`      | Reports sort descending by magnitude                       |
+| `TestGeoRadiusFilter`      | Geo radius filter returns nearby reports only              |
+
+## UAT Tests
+
+Playwright tests in `uat/` that validate the dashboard UI against the live stack. 44 tests covering map rendering, event filtering, timeline interaction, and the GraphQL query panel.
+
+```sh
+make test-uat        # Start stack + run tests
+make test-uat-only   # Run against already-running stack
+```
 
 ### Environment Overrides
 
@@ -131,6 +149,8 @@ make clean           # Stop, remove containers, volumes, and orphans
 make build           # Build all service images
 make test-e2e        # Start stack + run E2E tests
 make test-e2e-only   # Run E2E tests against an already-running stack
+make test-uat        # Start stack + run UAT (Playwright) tests
+make test-uat-only   # Run UAT tests against an already-running stack
 make ps              # Show running services
 make logs            # Tail logs from all services
 make logs-collector  # Tail collector logs
@@ -155,7 +175,7 @@ The `compose.ci.yml` override replaces `build:` directives with `image:` referen
 
 ```
 compose.yml             Unified Docker Compose stack (local dev, builds from source)
-compose.ci.yml          CI override (published images from GHCR)
+compose.ci.yml          CI override (published images from Docker Hub)
 Makefile                Convenience targets for stack management and testing
 .env.kafka              Kafka KRaft broker configuration
 .env.postgres           PostgreSQL credentials
@@ -165,8 +185,20 @@ mock-server/
   Dockerfile            Multi-stage build (distroless + busybox)
   data/                 NOAA-format CSV test fixtures
 
+dashboard/
+  index.html            Single-page dashboard (Leaflet map, filters, timeline)
+  nginx.conf            Nginx config with API reverse proxy
+
+monitoring/
+  prometheus/
+    prometheus.yml      Scrape config for all three services
+
 e2e/
-  e2e_test.go           E2E test suite (9 tests)
+  e2e_test.go           E2E test suite (13 tests)
   helpers_test.go       GraphQL client, health polling, data propagation gate
   go.mod                Go module
+
+uat/
+  *.spec.ts             Playwright UAT tests (44 tests)
+  playwright.config.ts  Playwright configuration
 ```

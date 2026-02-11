@@ -43,13 +43,13 @@ Severity is derived from event type and magnitude during ETL enrichment. A magni
 
 ## Raw Message Shape (Collector Output)
 
-Published to `raw-weather-reports`. One message per CSV row. Keys match CSV column headers. The collector adds a `Type` field to identify the event type.
+Published to `raw-weather-reports`. One message per CSV row. Keys match CSV column headers (capitalized). The collector adds an `EventType` field to identify the event type.
 
 ### Hail
 
 ```json
 {
-  "Type": "hail",
+  "EventType": "hail",
   "Time": "1510",
   "Size": "125",
   "Location": "8 ESE Chappel",
@@ -65,7 +65,7 @@ Published to `raw-weather-reports`. One message per CSV row. Keys match CSV colu
 
 ```json
 {
-  "Type": "tornado",
+  "EventType": "tornado",
   "Time": "1223",
   "F_Scale": "UNK",
   "Location": "2 N Mcalester",
@@ -81,7 +81,7 @@ Published to `raw-weather-reports`. One message per CSV row. Keys match CSV colu
 
 ```json
 {
-  "Type": "wind",
+  "EventType": "wind",
   "Time": "1245",
   "Speed": "UNK",
   "Location": "Mcalester",
@@ -101,8 +101,8 @@ Published to `transformed-weather-data`. Normalized, enriched, and ready for per
 
 ```json
 {
-  "id": "a3f8b2c1e7d9...",
-  "type": "hail",
+  "id": "hail-a3f8b2c1e7d9...",
+  "event_type": "hail",
   "geo": {
     "lat": 31.02,
     "lon": -98.44
@@ -112,9 +112,7 @@ Published to `transformed-weather-data`. Normalized, enriched, and ready for per
     "unit": "in",
     "severity": "moderate"
   },
-  "begin_time": "2026-01-01T15:10:00Z",
-  "end_time": "2026-01-01T15:10:00Z",
-  "source": "spc",
+  "event_time": "2026-01-01T15:10:00Z",
   "location": {
     "raw": "8 ESE Chappel",
     "name": "Chappel",
@@ -151,7 +149,7 @@ Nesting improves enrichment code readability and maps directly to GraphQL types 
 
 | Header | Value | Description |
 |--------|-------|-------------|
-| `type` | Event type string | `hail`, `wind`, or `tornado` |
+| `event_type` | Event type string | `hail`, `wind`, or `tornado` |
 | `processed_at` | RFC 3339 timestamp | When enrichment occurred |
 
 ### Optional Fields
@@ -170,14 +168,12 @@ The API flattens nested JSON into PostgreSQL columns:
 ```sql
 CREATE TABLE storm_reports (
     id                          TEXT PRIMARY KEY,
-    type                        TEXT NOT NULL,
+    event_type                  TEXT NOT NULL,
     geo_lat                     DOUBLE PRECISION NOT NULL,
     geo_lon                     DOUBLE PRECISION NOT NULL,
     measurement_magnitude       DOUBLE PRECISION NOT NULL,
     measurement_unit            TEXT NOT NULL,
-    begin_time                  TIMESTAMPTZ NOT NULL,
-    end_time                    TIMESTAMPTZ NOT NULL,
-    source                      TEXT NOT NULL,
+    event_time                  TIMESTAMPTZ NOT NULL,
     location_raw                TEXT NOT NULL,
     location_name               TEXT NOT NULL,
     location_distance           DOUBLE PRECISION,
@@ -202,7 +198,7 @@ CREATE TABLE storm_reports (
 | JSON Path | Database Column |
 |-----------|----------------|
 | `id` | `id` |
-| `type` | `type` |
+| `event_type` | `event_type` |
 | `geo.lat` | `geo_lat` |
 | `geo.lon` | `geo_lon` |
 | `measurement.magnitude` | `measurement_magnitude` |
@@ -224,16 +220,16 @@ CREATE TABLE storm_reports (
 
 | Index | Columns | Purpose |
 |-------|---------|---------|
-| `idx_begin_time` | `begin_time` | Date range queries, ORDER BY |
-| `idx_type` | `type` | Filter by event type |
+| `idx_event_time` | `event_time` | Date range queries, ORDER BY |
+| `idx_event_type` | `event_type` | Filter by event type |
 | `idx_state` | `location_state` | Filter by state |
 | `idx_severity` | `measurement_severity` | Filter by severity level |
-| `idx_type_state_time` | `type, location_state, begin_time` | Composite for common "type + state + time" filter |
+| `idx_event_type_state_time` | `event_type, location_state, event_time` | Composite for common "event_type + state + time" filter |
 | `idx_geo` | `geo_lat, geo_lon` | Bounding box pre-filter for radius queries |
 
 ### ID Generation
 
-Event IDs are deterministic SHA-256 hashes of `type|state|lat|lon|time`. This enables:
+Event IDs are deterministic SHA-256 hashes of `event_type|state|lat|lon|time|magnitude`. This enables:
 
 - **Idempotent inserts**: `ON CONFLICT (id) DO NOTHING` naturally deduplicates
 - **No distributed coordination**: Any service can compute the same ID for the same event

@@ -10,6 +10,8 @@ const (
 	expectedHail    = 79
 	expectedTornado = 149
 	expectedWind    = 43
+
+	msgAggregationsNil = "aggregations is nil"
 )
 
 const wideTimeRange = `timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" }`
@@ -44,7 +46,7 @@ func TestReportCounts(t *testing.T) {
 	}
 
 	if sr.Aggregations == nil {
-		t.Fatal("aggregations is nil")
+		t.Fatal(msgAggregationsNil)
 	}
 
 	typeCounts := map[string]int{}
@@ -80,7 +82,7 @@ func TestStateAggregations(t *testing.T) {
 	sr := result.Data.StormReports
 
 	if sr.Aggregations == nil {
-		t.Fatal("aggregations is nil")
+		t.Fatal(msgAggregationsNil)
 	}
 	states := sr.Aggregations.ByState
 
@@ -212,7 +214,7 @@ func TestHourlyAggregation(t *testing.T) {
 	sr := result.Data.StormReports
 
 	if sr.Aggregations == nil {
-		t.Fatal("aggregations is nil")
+		t.Fatal(msgAggregationsNil)
 	}
 
 	if len(sr.Aggregations.ByHour) == 0 {

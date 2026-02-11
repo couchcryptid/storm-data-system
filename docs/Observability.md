@@ -54,6 +54,18 @@ scrape_configs:
 
 The collector uses a 60-second interval because it only runs once daily. The ETL and API use 15-second intervals for finer-grained visibility.
 
+## Compose Stack Tooling
+
+The unified Docker Compose stack includes Prometheus and Kafka UI for local observability out of the box.
+
+### Prometheus
+
+Available at [http://localhost:9090](http://localhost:9090) when the stack is running. Pre-configured to scrape all three services using `monitoring/prometheus/prometheus.yml`. Use the query examples below or the built-in expression browser to explore metrics.
+
+### Kafka UI
+
+Available at [http://localhost:8082](http://localhost:8082). Provides a web interface for inspecting Kafka topics, messages, consumer groups, and broker configuration. Useful for verifying that the collector is publishing raw events and the ETL is producing enriched events.
+
 ## Key Monitoring Queries
 
 ### System Health
@@ -127,4 +139,4 @@ All services support configurable log levels via `LOG_LEVEL`:
 
 The API exposes `dataLagMinutes` via the GraphQL `stormReports` query. This represents the time since the most recent `processed_at` timestamp in PostgreSQL. During storm season, a lag exceeding 2 hours may indicate a pipeline problem.
 
-See [[Architecture]] for the alerting improvement roadmap.
+See [[Architecture]] for the improvement roadmap, including Prometheus alerting on data lag.

@@ -41,7 +41,7 @@ make test-unit    # go test ./internal/... -count=1 -race
 ```
 
 - Tests model deserialization, enum validation, sort field behavior
-- Mock data in `data/mock/` (30 reports: 10 hail, 10 tornado, 10 wind)
+- Mock data in `data/mock/` (271 reports: 79 hail, 149 tornado, 43 wind)
 - No infrastructure dependencies
 
 ## Integration Tests
@@ -125,12 +125,12 @@ Mock Server (CSV) --> Collector --> Kafka (raw) --> ETL --> Kafka (enriched) -->
 
 ### Data Propagation Gate
 
-Tests use a `sync.Once` pattern to poll the GraphQL API until all 9 test records appear (up to 120 seconds), then run assertions. This avoids flaky timing-dependent tests.
+Tests use a `sync.Once` pattern to poll the GraphQL API until all 271 records appear (up to 120 seconds), then run assertions. This avoids flaky timing-dependent tests.
 
 ```go
 func ensureDataPropagated(t *testing.T) {
     dataReady.Do(func() {
-        // Poll until 9 records appear or timeout
+        // Poll until 271 records appear or timeout
     })
 }
 ```
@@ -140,26 +140,30 @@ func ensureDataPropagated(t *testing.T) {
 | Test | What It Verifies |
 |------|-----------------|
 | `TestServicesHealthy` | All services respond to `/healthz` |
-| `TestDataPropagation` | Data flows through the full pipeline (9 records) |
-| `TestReportCounts` | 3 hail + 3 tornado + 3 wind via `byType` aggregation |
-| `TestStateAggregations` | TX=5, OK=3, NE=1 with county breakdowns |
+| `TestDataPropagation` | Data flows through the full pipeline (271 records) |
+| `TestReportCounts` | 79 hail + 149 tornado + 43 wind via `byType` aggregation |
+| `TestStateAggregations` | State and county breakdowns match expected counts |
 | `TestReportEnrichment` | All reports have ID, unit, timeBucket, processedAt, geo |
 | `TestSpotCheckHailReport` | San Saba TX hail: magnitude=1.25, unit=in, sourceOffice=SJT |
 | `TestHourlyAggregation` | Hourly bucket counts sum to totalCount |
-| `TestTypeFilter` | Filtering by `tornado` returns exactly 3 reports |
-| `TestLastUpdated` | `lastUpdated` and `dataLagMinutes` are populated |
+| `TestEventTypeFilter` | Filtering by `tornado` returns only tornado reports |
+| `TestMeta` | `lastUpdated` and `dataLagMinutes` are populated |
+| `TestPagination` | Limit/offset pagination returns distinct pages |
+| `TestSeverityFilter` | Filtering by severity narrows results correctly |
+| `TestSortByMagnitude` | Reports sort descending by magnitude |
+| `TestGeoRadiusFilter` | Geo radius filter returns nearby reports only |
 
 ### Test Fixtures
 
-CSV files in `mock-server/data/` follow the NOAA naming format `{YYMMDD}_rpts_{type}.csv`:
+CSV files in `mock-server/data/` follow the NOAA naming format `{YYMMDD}_rpts_{type}.csv`. The mock dataset is real NOAA SPC data from April 26, 2024:
 
-| File | Records | States | Description |
-|------|---------|--------|-------------|
-| `260101_rpts_hail.csv` | 3 | TX | Hail (100--175 hundredths of inch) |
-| `260101_rpts_torn.csv` | 3 | OK, NE, TX | Tornado (UNK, EF1) |
-| `260101_rpts_wind.csv` | 3 | OK, TX | Wind (UNK, 65, 70 mph) |
+| File | Records | Description |
+|------|---------|-------------|
+| `240426_rpts_hail.csv` | 79 | Hail reports |
+| `240426_rpts_torn.csv` | 149 | Tornado reports |
+| `240426_rpts_wind.csv` | 43 | Wind reports |
 
-Total: **9 records** across **3 states** (TX, OK, NE).
+Total: **271 records** across **11 states**.
 
 ### Environment Overrides
 
@@ -170,6 +174,37 @@ Tests default to `localhost` URLs. Override for non-standard ports:
 | `API_URL` | `http://localhost:8080` |
 | `COLLECTOR_URL` | `http://localhost:3000` |
 | `ETL_URL` | `http://localhost:8081` |
+
+## User Acceptance Tests (UAT)
+
+Playwright tests in `uat/` that validate the dashboard UI against the live Docker Compose stack. These tests exercise the full user experience: map rendering, event filtering, timeline interaction, and GraphQL query display.
+
+### Running
+
+```sh
+cd storm-data-system
+make test-uat        # Start stack + run tests
+make test-uat-only   # Run against already-running stack
+```
+
+### What They Cover
+
+- Dashboard loads and displays the map with storm event markers
+- Event type filters (hail, tornado, wind) toggle correctly
+- Severity and state filters narrow results
+- Timeline displays hourly aggregation data
+- Expandable GraphQL query panel shows the raw query
+- Report count and data summary match expected mock data
+
+### Prerequisites
+
+- Node.js (for `npx playwright`)
+- Running stack (`make up`)
+- Playwright browsers installed (`npx playwright install`)
+
+### CI Integration
+
+UAT tests run in the `e2e.yml` workflow after E2E tests pass. The workflow installs Playwright browsers and runs against the Docker Compose stack with published images.
 
 ## Coverage
 
@@ -201,3 +236,4 @@ Each service runs unit tests and linting in CI on every push/PR to `main`. Integ
 | Unit | Every push/PR | Seconds | No |
 | Integration | Local / CI with Docker | 1-2 minutes | Yes |
 | E2E | Local / CI with Docker | 2-5 minutes | Yes |
+| UAT | Local / CI with Docker | 1-2 minutes | Yes |

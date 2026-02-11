@@ -199,9 +199,7 @@ type stormReport struct {
 	EventType    string      `json:"eventType"`
 	Geo          geo         `json:"geo"`
 	Measurement  measurement `json:"measurement"`
-	BeginTime    string      `json:"beginTime"`
-	EndTime      string      `json:"endTime"`
-	Source       string      `json:"source"`
+	EventTime    string      `json:"eventTime"`
 	SourceOffice string      `json:"sourceOffice"`
 	Location     location    `json:"location"`
 	Comments     string      `json:"comments"`

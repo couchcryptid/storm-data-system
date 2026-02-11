@@ -1,6 +1,6 @@
 # Architecture
 
-System design, tradeoffs, improvement roadmap, and GCP cost analysis for the storm data pipeline. For a detailed look at how data moves through the system, see [[Data Flow]]. For per-service configuration, see [[Configuration]].
+System design, tradeoffs, and improvement roadmap for the storm data pipeline. For a detailed look at how data moves through the system, see [[Data Flow]]. For per-service configuration, see [[Configuration]].
 
 ## System Overview
 
@@ -36,15 +36,15 @@ The ETL and API consumers use manual offset commits. Offsets are committed only 
 
 **Why**: Prevents data loss. If a consumer crashes mid-processing, the message is redelivered on restart.
 
-**Tradeoff**: Duplicate processing is possible. The API handles this with `INSERT ... ON CONFLICT (id) DO NOTHING` using deterministic IDs (SHA-256 hash of type+state+lat+lon+time). The ETL's transform is stateless and idempotent, so duplicates produce identical output.
+**Tradeoff**: Duplicate processing is possible. The API handles this with `INSERT ... ON CONFLICT (id) DO NOTHING` using deterministic IDs (SHA-256 hash of event_type+state+lat+lon+time+magnitude). The ETL's transform is stateless and idempotent, so duplicates produce identical output.
 
 ### Deterministic IDs
 
-Event IDs are SHA-256 hashes of `type|state|lat|lon|time`. The same raw event always produces the same ID.
+Event IDs are SHA-256 hashes of `event_type|state|lat|lon|time|magnitude`. The same raw event always produces the same ID.
 
 **Why**: Enables idempotent writes at every stage. The API's upsert (`ON CONFLICT DO NOTHING`) naturally deduplicates. No distributed ID generation needed.
 
-**Tradeoff**: Two genuinely different events with identical type, state, coordinates, and timestamp would collide. In practice, NOAA data has sufficient uniqueness in these fields. Adding the `Comments` field to the hash would reduce collision risk at the cost of sensitivity to comment edits.
+**Tradeoff**: Two genuinely different events with identical event type, state, coordinates, timestamp, and magnitude would collide. In practice, NOAA data has sufficient uniqueness in these fields. Adding the `Comments` field to the hash would reduce collision risk at the cost of sensitivity to comment edits.
 
 ### Cron-based collection
 
@@ -82,109 +82,26 @@ For the complete data model and message shapes at each stage, see [[Data Model]]
 
 ## Improvements
 
+Ingest volume is low (hundreds of records per day during storm season) and doesn't need to scale. The improvements below focus on query performance, API reliability, and developer experience.
+
 ### Near-term
 
 **Schema registry** -- Introduce Avro or Protobuf schemas with a Confluent Schema Registry (or Buf). Currently the Kafka message format is an implicit JSON contract. A schema registry would catch breaking changes at publish time rather than at consumer parse time.
 
-**OpenTelemetry tracing** -- Add distributed tracing across all three services. Each Kafka message would carry a trace context header, enabling end-to-end latency visualization. GCP Cloud Trace provides a managed backend.
+**OpenTelemetry tracing** -- Add distributed tracing across all three services. Each Kafka message would carry a trace context header, enabling end-to-end latency visualization from ingest to query response.
 
 **Alerting on data lag** -- The API already exposes `dataLagMinutes` via GraphQL. Add Prometheus alerting rules for when data lag exceeds a threshold (e.g., 2 hours during storm season).
 
 ### Medium-term
 
-**Connection pooling for Mapbox** -- The optional geocoding enrichment makes one HTTP call per event. A connection pool, circuit breaker, and rate limiter would improve resilience when geocoding is enabled.
+**API response caching** -- Add an in-memory or Redis cache in front of PostgreSQL for frequently-queried time ranges and aggregations. Storm data is append-only, so cache invalidation only needs to happen on new ingestion batches.
 
-**PostgreSQL partitioning** -- Partition the `storm_reports` table by `begin_time` (monthly or yearly). This would improve query performance for time-range filters and simplify data retention.
+**PostgreSQL partitioning** -- Partition the `storm_reports` table by `event_time` (monthly or yearly). This would improve query performance for time-range filters and simplify data retention as the dataset grows.
 
 **GraphQL subscriptions** -- Add WebSocket-based subscriptions so clients can receive real-time updates when new storm reports are ingested. gqlgen supports subscriptions natively.
 
 ### Long-term
 
-**Real-time ingestion** -- If NOAA provides a streaming API in the future, replace cron-based collection with a persistent connection. The Kafka-based architecture already supports this -- only the collector would change.
-
-**Multi-region deployment** -- Deploy the API to multiple GCP regions with Cloud SQL read replicas for lower latency. Kafka MirrorMaker 2 could replicate topics across regions.
+**Read replicas** -- Add PostgreSQL read replicas to scale query throughput. The API's read-heavy workload (GraphQL queries) is a natural fit for read replicas, while the single writer (Kafka consumer) continues targeting the primary.
 
 **ML enrichment** -- Add a machine learning step to the ETL pipeline for damage estimation, storm path prediction, or severity classification beyond the current rule-based approach.
-
-## GCP Cloud Cost Analysis
-
-Cost estimates for running the storm data pipeline on Google Cloud Platform. NOAA storm data is low volume (hundreds to low thousands of records per day during storm season), so the workload is lightweight.
-
-### Architecture Options
-
-#### Option A: Cloud Run + Managed Services (Recommended)
-
-Best for low-to-moderate traffic. Pay-per-use, scales to zero, minimal operations.
-
-| Component              | GCP Service                    | Spec                          | Monthly Cost |
-| ---------------------- | ------------------------------ | ----------------------------- | ------------ |
-| Collector              | Cloud Run                      | 1 vCPU, 512MB, cron trigger  | $1--5        |
-| ETL                    | Cloud Run                      | 1 vCPU, 512MB, always-on     | $5--15       |
-| API                    | Cloud Run                      | 1 vCPU, 512MB, autoscale 0-3 | $5--20       |
-| Kafka                  | Confluent Cloud (Basic)        | 1 CKU, 2 topics, low throughput | $50--100  |
-| PostgreSQL             | Cloud SQL (PostgreSQL 16)      | db-f1-micro, 10GB SSD        | $10--15      |
-| Container Registry     | Artifact Registry              | 3 images, ~200MB each        | $1--2        |
-| CI/CD                  | Cloud Build                    | 120 min/day free tier         | $0--5        |
-| Monitoring             | Cloud Monitoring               | Free tier + custom metrics    | $0--10       |
-| Scheduler              | Cloud Scheduler                | Cron trigger for collector    | $0           |
-| **Total**              |                                |                               | **$72--172** |
-
-**Notes**:
-
-- Cloud Run bills per 100ms of CPU time. The collector runs once daily (seconds of compute). The ETL and API are lightweight.
-- Confluent Cloud Basic tier is the largest cost. Self-managed Kafka on a small GKE node ($25--50/month) would save money but add operational burden.
-- Cloud SQL db-f1-micro (0.6GB RAM, shared vCPU) is sufficient for this data volume. Upgrade to db-custom-1-3840 (~$30/month) if query latency matters.
-
-#### Option B: GKE Autopilot
-
-Better for teams already on Kubernetes. More control, but higher base cost.
-
-| Component              | GCP Service                    | Spec                          | Monthly Cost |
-| ---------------------- | ------------------------------ | ----------------------------- | ------------ |
-| GKE Autopilot          | GKE                            | Base fee + pod costs          | $75--120     |
-| Kafka (self-managed)   | KRaft on GKE                   | 1 broker, 1GB RAM, 10GB disk | $0 (pod cost included) |
-| PostgreSQL             | Cloud SQL (PostgreSQL 16)      | db-f1-micro, 10GB SSD        | $10--15      |
-| Container Registry     | Artifact Registry              | 3 images                      | $1--2        |
-| Load Balancer          | GKE Ingress                    | 1 forwarding rule             | $18--20      |
-| **Total**              |                                |                               | **$104--157** |
-
-**Notes**:
-
-- GKE Autopilot charges $0.0445/vCPU-hour and $0.0049225/GB-hour for pod resources.
-- Self-managing Kafka on GKE eliminates the Confluent Cloud cost but requires monitoring ZooKeeper/KRaft, brokers, and disk.
-- Better suited if you plan to add more services or need fine-grained resource control.
-
-#### Option C: Pub/Sub Instead of Kafka
-
-Lowest cost and operational burden. Replaces Kafka with GCP-native messaging.
-
-| Component              | GCP Service                    | Spec                          | Monthly Cost |
-| ---------------------- | ------------------------------ | ----------------------------- | ------------ |
-| Collector              | Cloud Run                      | Cron-triggered                | $1--5        |
-| ETL                    | Cloud Run                      | Pub/Sub push subscription     | $5--15       |
-| API                    | Cloud Run                      | Pub/Sub push + GraphQL        | $5--20       |
-| Messaging              | Cloud Pub/Sub                  | 2 topics, low throughput      | $0--5        |
-| PostgreSQL             | Cloud SQL (PostgreSQL 16)      | db-f1-micro, 10GB SSD        | $10--15      |
-| Container Registry     | Artifact Registry              | 3 images                      | $1--2        |
-| **Total**              |                                |                               | **$22--62**  |
-
-**Notes**:
-
-- Cloud Pub/Sub's free tier covers 10GB/month of messaging. Storm data is well under this.
-- Requires refactoring the Kafka producers/consumers to use Pub/Sub client libraries. The hexagonal architecture in the ETL makes this straightforward (swap the Kafka adapter for a Pub/Sub adapter).
-- Loses Kafka features: consumer groups with partition assignment, exactly-once semantics, log compaction, replay from offset.
-
-### Cost Optimization Tips
-
-- **Cloud Run min-instances=0** -- All services can scale to zero during off-season (November--March) when storm data volume drops significantly.
-- **Cloud SQL shared-core** -- The db-f1-micro instance is ~$7/month. Only upgrade if query latency becomes an issue.
-- **Committed use discounts** -- 1-year or 3-year commitments on Cloud SQL reduce costs by 25--52%.
-- **Confluent Cloud vs self-managed** -- If Confluent Cloud ($50--100/month) dominates cost, consider self-managing Kafka on a small Compute Engine instance ($15--25/month) or switching to Pub/Sub.
-- **Artifact Registry cleanup** -- Set lifecycle policies to delete untagged images after 7 days.
-- **Regional vs multi-region** -- Deploy everything in a single region (e.g., `us-central1`) to avoid cross-region data transfer costs.
-
-### Recommendation
-
-**Start with Option A (Cloud Run + Confluent Cloud Basic)** at ~$72--172/month. This minimizes operational overhead while keeping the Kafka-based architecture intact. If cost becomes a concern, migrate from Confluent Cloud to self-managed Kafka or Pub/Sub (Option C) to bring costs under $60/month.
-
-For a team evaluating the pipeline before committing to production, the free tiers of Cloud Run, Cloud Build, and Cloud Monitoring cover most services. The primary costs are Kafka ($50--100) and Cloud SQL ($10--15).

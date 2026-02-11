@@ -145,7 +145,7 @@ All services follow the same shutdown pattern:
 
 | Tool | Collector | ETL | API |
 |------|-----------|-----|-----|
-| Linter | ESLint + `@typescript-eslint` | golangci-lint (20+ linters) | golangci-lint (20+ linters) |
+| Linter | ESLint + `@typescript-eslint` | golangci-lint (14 linters) | golangci-lint (15 linters) |
 | Formatter | Prettier | gofmt + goimports | gofmt + goimports |
 | Pre-commit | Husky + lint-staged | `.pre-commit-config.yaml` | `.pre-commit-config.yaml` |
 | Secret detection | -- | gitleaks | gitleaks |

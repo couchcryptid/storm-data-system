@@ -19,6 +19,28 @@ test.describe('GraphQL Query Panel', () => {
     await expect(page.locator('#query-panel')).not.toHaveClass(/expanded/);
   });
 
+  test('pressing Enter on query bar toggles panel', async ({ dashboardPage: page }) => {
+    const bar = page.locator('#query-bar');
+    await bar.focus();
+    await bar.press('Enter');
+    await expect(page.locator('#query-panel')).toHaveClass(/expanded/);
+    await expect(bar).toHaveAttribute('aria-expanded', 'true');
+
+    await bar.press('Enter');
+    await expect(page.locator('#query-panel')).not.toHaveClass(/expanded/);
+    await expect(bar).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('pressing Space on query bar toggles panel', async ({ dashboardPage: page }) => {
+    const bar = page.locator('#query-bar');
+    await bar.focus();
+    await bar.press('Space');
+    await expect(page.locator('#query-panel')).toHaveClass(/expanded/);
+
+    await bar.press('Space');
+    await expect(page.locator('#query-panel')).not.toHaveClass(/expanded/);
+  });
+
   test('query text is populated with initial query', async ({ dashboardPage: page }) => {
     const value = await page.locator('#query-text').inputValue();
     expect(value).toContain('stormReports');

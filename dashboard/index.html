@@ -30,6 +30,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
       padding: 16px 24px;
       border-bottom: 1px solid var(--border);
     }
@@ -49,6 +51,45 @@
     }
     .status.ok { color: #4ade80; }
     .status.err { color: var(--tornado); }
+
+    /* Date controls */
+    .date-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .date-controls .date-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .date-controls input[type="date"] {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color-scheme: dark;
+    }
+    .date-controls .date-sep {
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+    .date-controls .range-toggle {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+    .date-controls .range-toggle input { cursor: pointer; }
+    .date-range-end { display: none; }
+    .date-controls.range-mode .date-range-end { display: contents; }
 
     /* Data freshness badge */
     .freshness {
@@ -73,7 +114,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      flex-wrap: wrap;
+      gap: 8px 12px;
       padding: 8px 24px;
       border-bottom: 1px solid var(--border);
     }
@@ -214,7 +256,7 @@
     #map { height: 480px; }
     .table-wrap {
       max-height: 480px;
-      overflow-y: auto;
+      overflow: auto;
     }
     table {
       width: 100%;
@@ -254,11 +296,22 @@
     .controls {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 12px;
       padding: 12px 16px;
       border-bottom: 1px solid var(--border);
     }
     .controls label { font-size: 12px; color: var(--text-dim); }
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+    }
+    .filter-group label.disabled { opacity: 0.4; }
     .controls select, .controls input {
       background: var(--bg);
       color: var(--text);
@@ -374,10 +427,33 @@
       color: var(--text-dim);
     }
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
     @media (max-width: 900px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .main { grid-template-columns: 1fr; }
       .query-body { flex-direction: column; }
+    }
+    @media (max-width: 480px) {
+      .stats { grid-template-columns: 1fr; }
+      header, .stats, .main { padding-left: 12px; padding-right: 12px; }
+      .timeline-section { margin-left: 12px; margin-right: 12px; }
+      #map { height: 320px; }
     }
   </style>
 </head>
@@ -385,11 +461,18 @@
   <header>
     <h1><span>Storm Data</span> Dashboard</h1>
     <div class="header-right">
+      <div id="date-controls" class="date-controls">
+        <span class="date-label">Date</span>
+        <input type="date" id="date-from" aria-label="Report date">
+        <span class="date-range-end"><span class="date-sep">to</span>
+        <input type="date" id="date-to" aria-label="End date"></span>
+        <label class="range-toggle"><input type="checkbox" id="date-range-toggle"> Range</label>
+      </div>
       <div id="freshness" class="freshness" style="display:none">
         <span class="freshness-label">Data lag:</span>
         <span id="freshness-value" class="freshness-value">--</span>
       </div>
-      <div id="status" class="status">Connecting...</div>
+      <div id="status" class="status" aria-live="polite">Connecting...</div>
     </div>
   </header>
 
@@ -457,9 +540,14 @@
             <option value="wind">Wind</option>
           </select>
         </label>
-        <label>State:
-          <select id="filter-state"><option value="">All</option></select>
-        </label>
+        <div class="filter-group">
+          <label>State:
+            <select id="filter-state"><option value="">All</option></select>
+          </label>
+          <label id="county-label" class="disabled">County:
+            <select id="filter-county" disabled><option value="">Select a state</option></select>
+          </label>
+        </div>
         <label>Severity:
           <select id="filter-severity">
             <option value="">All</option>
@@ -469,20 +557,18 @@
             <option value="extreme">Extreme</option>
           </select>
         </label>
-        <label>County:
-          <select id="filter-county" disabled><option value="">All</option></select>
-        </label>
       </div>
       <div class="table-wrap">
         <table>
+          <caption class="sr-only">Storm event reports</caption>
           <thead>
             <tr>
-              <th>Type</th>
-              <th>Location</th>
-              <th>State</th>
-              <th>Magnitude</th>
-              <th>Severity</th>
-              <th>Time (UTC)</th>
+              <th scope="col">Type</th>
+              <th scope="col">Location</th>
+              <th scope="col">State</th>
+              <th scope="col">Magnitude</th>
+              <th scope="col">Severity</th>
+              <th scope="col">Time (UTC)</th>
             </tr>
           </thead>
           <tbody id="report-body"></tbody>
@@ -493,7 +579,7 @@
 
   <!-- Query panel (fixed bottom drawer) -->
   <div id="query-panel" class="query-panel">
-    <div class="query-bar" id="query-bar">
+    <div class="query-bar" id="query-bar" role="button" tabindex="0" aria-expanded="false" aria-controls="query-body">
       <div class="query-bar-left">
         <span class="arrow">&#9650;</span>
         GraphQL Query
@@ -504,7 +590,7 @@
         <span id="query-time" class="query-time"></span>
       </div>
     </div>
-    <div class="query-body">
+    <div class="query-body" id="query-body">
       <textarea id="query-text" class="query-textarea" readonly spellcheck="false"></textarea>
       <pre id="query-result" class="query-result">Run a query to see results here.</pre>
     </div>
@@ -756,6 +842,7 @@ function applyFilters() {
 function populateStateFilter(reports) {
   const states = [...new Set(reports.map(r => r.location.state))].sort();
   const sel = document.getElementById('filter-state');
+  sel.innerHTML = '<option value="">All</option>';
   for (const s of states) {
     const opt = document.createElement('option');
     opt.value = s;
@@ -766,12 +853,16 @@ function populateStateFilter(reports) {
 
 function populateCountyFilter(reports, state) {
   const sel = document.getElementById('filter-county');
-  sel.innerHTML = '<option value="">All</option>';
+  const lbl = document.getElementById('county-label');
   if (!state) {
+    sel.innerHTML = '<option value="">Select a state</option>';
     sel.disabled = true;
+    lbl.classList.add('disabled');
     return;
   }
+  sel.innerHTML = '<option value="">All</option>';
   sel.disabled = false;
+  lbl.classList.remove('disabled');
   const counties = [...new Set(
     reports.filter(r => r.location.state === state).map(r => r.location.county)
   )].filter(Boolean).sort();
@@ -789,9 +880,19 @@ function setQueryText(query) {
   document.getElementById('query-text').value = query;
 }
 
-document.getElementById('query-bar').addEventListener('click', (e) => {
+function toggleQueryPanel(e) {
   if (e.target.closest('.query-bar-right')) return;
-  document.getElementById('query-panel').classList.toggle('expanded');
+  const panel = document.getElementById('query-panel');
+  panel.classList.toggle('expanded');
+  document.getElementById('query-bar').setAttribute('aria-expanded', panel.classList.contains('expanded'));
+}
+
+document.getElementById('query-bar').addEventListener('click', toggleQueryPanel);
+document.getElementById('query-bar').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    toggleQueryPanel(e);
+  }
 });
 
 document.getElementById('query-editable').addEventListener('change', (e) => {
@@ -819,15 +920,20 @@ document.getElementById('query-run').addEventListener('click', async () => {
   }
 });
 
-// ── Data fetch ──────────────────────────────────────────────
+// ── Date controls ───────────────────────────────────────────
 
-const REPORT_QUERY = `{
+function buildTimeRange(fromDate, toDate) {
+  return { from: `${fromDate}T00:00:00Z`, to: `${toDate}T23:59:59Z` };
+}
+
+function buildReportQuery(timeRange, offset) {
+  return `{
   stormReports(filter: {
-    timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" }
+    timeRange: { from: "${timeRange.from}", to: "${timeRange.to}" }
     sortBy: EVENT_TIME
     sortOrder: DESC
     limit: 20
-    offset: __OFFSET__
+    offset: ${offset}
   }) {
     totalCount hasMore
     reports {
@@ -847,8 +953,20 @@ const REPORT_QUERY = `{
     meta { lastUpdated dataLagMinutes }
   }
 }`;
+}
 
-async function fetchAllReports() {
+function getSelectedTimeRange() {
+  const from = document.getElementById('date-from').value;
+  const controls = document.getElementById('date-controls');
+  const to = controls.classList.contains('range-mode')
+    ? document.getElementById('date-to').value
+    : from;
+  return buildTimeRange(from, to);
+}
+
+// ── Data fetch ──────────────────────────────────────────────
+
+async function fetchAllReports(timeRange) {
   let all = [];
   let offset = 0;
   const limit = 20;
@@ -856,7 +974,7 @@ async function fetchAllReports() {
   let meta = null;
 
   while (hasMore) {
-    const query = REPORT_QUERY.replace('__OFFSET__', offset);
+    const query = buildReportQuery(timeRange, offset);
     if (offset === 0) setQueryText(query);
     const data = await gql(query);
     const sr = data.stormReports;
@@ -874,29 +992,41 @@ async function fetchAllReports() {
 
 // ── Init ────────────────────────────────────────────────────
 
-async function init() {
+async function loadReports(timeRange) {
   const statusEl = document.getElementById('status');
   try {
     statusEl.textContent = 'Loading data...';
-    const { reports, meta } = await fetchAllReports();
+    statusEl.className = 'status';
+    const { reports, meta } = await fetchAllReports(timeRange);
     allReports = reports;
 
     renderFreshness(meta);
     populateStateFilter(allReports);
+
+    // Reset dependent filters
+    document.getElementById('filter-state').value = '';
+    populateCountyFilter(allReports, '');
+    document.getElementById('filter-type').value = '';
+    document.getElementById('filter-severity').value = '';
     applyFilters();
 
     if (allReports.length > 0) {
       const bounds = L.latLngBounds(allReports.map(r => [r.geo.lat, r.geo.lon]));
       map.fitBounds(bounds, { padding: [30, 30] });
+      statusEl.textContent = `${allReports.length} reports loaded`;
+      statusEl.className = 'status ok';
+    } else {
+      map.setView([39.5, -98.5], 5);
+      statusEl.textContent = 'No reports for selected date';
+      statusEl.className = 'status';
     }
-
-    statusEl.textContent = `${allReports.length} reports loaded`;
-    statusEl.className = 'status ok';
 
     const dateRange = document.getElementById('date-range');
     if (allReports.length > 0) {
       const times = allReports.map(r => new Date(r.eventTime)).sort((a, b) => a - b);
       dateRange.textContent = `${times[0].toISOString().slice(0, 10)} — ${times[times.length - 1].toISOString().slice(0, 10)}`;
+    } else {
+      dateRange.textContent = 'No data';
     }
   } catch (err) {
     statusEl.textContent = `Error: ${err.message}`;
@@ -904,6 +1034,42 @@ async function init() {
     console.error(err);
   }
 }
+
+async function init() {
+  const statusEl = document.getElementById('status');
+
+  try {
+    // Quick probe to detect what date has data
+    statusEl.textContent = 'Detecting data...';
+    const probe = await gql(buildReportQuery(buildTimeRange('2020-01-01', '2030-01-01'), 0));
+    const probeReports = probe.stormReports.reports;
+
+    let detectedDate;
+    if (probeReports.length > 0) {
+      // Use the most common date from the first page
+      const dates = probeReports.map(r => r.eventTime.slice(0, 10));
+      const freq = {};
+      for (const d of dates) freq[d] = (freq[d] || 0) + 1;
+      detectedDate = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
+    } else {
+      detectedDate = new Date().toISOString().slice(0, 10);
+    }
+
+    // Set date pickers and load with detected date
+    document.getElementById('date-from').value = detectedDate;
+    document.getElementById('date-to').value = detectedDate;
+    await loadReports(buildTimeRange(detectedDate, detectedDate));
+  } catch (err) {
+    const fallback = new Date().toISOString().slice(0, 10);
+    document.getElementById('date-from').value = fallback;
+    document.getElementById('date-to').value = fallback;
+    statusEl.textContent = `Error: ${err.message}`;
+    statusEl.className = 'status err';
+    console.error(err);
+  }
+}
+
+// ── Event listeners ─────────────────────────────────────────
 
 document.getElementById('filter-type').addEventListener('change', applyFilters);
 document.getElementById('filter-state').addEventListener('change', () => {
@@ -913,6 +1079,35 @@ document.getElementById('filter-state').addEventListener('change', () => {
 document.getElementById('filter-severity').addEventListener('change', applyFilters);
 document.getElementById('filter-county').addEventListener('change', applyFilters);
 document.getElementById('map-color-mode').addEventListener('change', applyFilters);
+
+document.getElementById('date-from').addEventListener('change', () => {
+  const controls = document.getElementById('date-controls');
+  if (!controls.classList.contains('range-mode')) {
+    document.getElementById('date-to').value = document.getElementById('date-from').value;
+  }
+  loadReports(getSelectedTimeRange());
+});
+document.getElementById('date-to').addEventListener('change', () => {
+  const from = document.getElementById('date-from').value;
+  const to = document.getElementById('date-to').value;
+  if (from && to && to < from) {
+    document.getElementById('date-to').value = from;
+  }
+  loadReports(getSelectedTimeRange());
+});
+document.getElementById('date-range-toggle').addEventListener('change', (e) => {
+  const controls = document.getElementById('date-controls');
+  if (e.target.checked) {
+    controls.classList.add('range-mode');
+  } else {
+    controls.classList.remove('range-mode');
+    const from = document.getElementById('date-from').value;
+    const to = document.getElementById('date-to').value;
+    document.getElementById('date-to').value = from;
+    // Only reload if the dates were actually different.
+    if (to !== from) loadReports(getSelectedTimeRange());
+  }
+});
 
 await init();
 </script>

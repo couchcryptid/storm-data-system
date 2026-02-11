@@ -26,11 +26,12 @@ The dashboard is a single-page app served by nginx at port 8000. It queries the 
 
 - **Stats cards**: Total report count plus per-type breakdowns (hail, tornado, wind) with max magnitude
 - **Activity timeline**: Stacked bar chart showing report counts by hour, color-coded by event type
-- **Event map**: Leaflet map with circle markers sized by severity and colored by event type. Click markers for popup details (type, magnitude, location, county, time, comments)
+- **Event map**: Leaflet map with circle markers sized by severity. Toggle between "By Type" (color per event type) and "By Severity" (color per severity level, radius scaled by magnitude) using the color mode dropdown
 - **Reports table**: Filterable list of all reports with columns for type, location, state, magnitude, severity, and time
-- **Filters**: Dropdown filters for event type, state, and severity that update both the map and table
+- **Filters**: Dropdown filters for event type, state, county, and severity that update the map, table, and timeline. County is a cascading filter — select a state first to enable it
+- **Date picker**: Select a report date in the header to query a specific day. Check "Range" to query a date range. Auto-detects the date from loaded data. Shows empty state when no data exists for the selected date
 - **Data freshness**: Badge showing `dataLagMinutes` from the GraphQL `meta` response with color-coded severity (green/yellow/orange/red)
-- **GraphQL query panel**: Expandable bottom drawer showing the live query. Enable "Edit" mode to modify and re-run queries against the API
+- **GraphQL query panel**: Expandable bottom drawer showing the live query. Toggle with click, Enter, or Space. Enable "Edit" mode to modify and re-run queries against the API
 
 ### Demo Data
 
@@ -78,7 +79,7 @@ After starting the stack, you can run end-to-end and user acceptance tests:
 
 ```sh
 make test-e2e-only   # 13 Go E2E tests against the GraphQL API
-make test-uat-only   # 44 Playwright tests against the dashboard
+make test-uat-only   # 50 Playwright tests against the dashboard
 ```
 
 See [[Testing]] for the full testing strategy.

@@ -190,10 +190,14 @@ make test-uat-only   # Run against already-running stack
 ### What They Cover
 
 - Dashboard loads and displays the map with storm event markers
+- Map color mode toggle (by type / by severity)
 - Event type filters (hail, tornado, wind) toggle correctly
-- Severity and state filters narrow results
+- Severity, state, and county filters narrow results
+- County filter disabled until a state is selected
+- Date picker auto-detects date, range toggle, empty state for invalid dates
 - Timeline displays hourly aggregation data
 - Expandable GraphQL query panel shows the raw query
+- Query panel keyboard accessibility (Enter/Space toggle, aria-expanded)
 - Report count and data summary match expected mock data
 
 ### Prerequisites

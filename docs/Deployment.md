@@ -4,9 +4,9 @@ How to run the complete storm data stack. The unified Docker Compose in this rep
 
 For per-service Docker details, see each service's wiki:
 
-- [Collector Deployment](https://github.com/brendanvinson/storm-data-collector/wiki/Deployment)
-- [ETL Deployment](https://github.com/brendanvinson/storm-data-etl/wiki/Deployment)
-- [API Deployment](https://github.com/brendanvinson/storm-data-api/wiki/Deployment)
+- [Collector Deployment](https://github.com/couchcryptid/storm-data-collector/wiki/Deployment)
+- [ETL Deployment](https://github.com/couchcryptid/storm-data-etl/wiki/Deployment)
+- [API Deployment](https://github.com/couchcryptid/storm-data-api/wiki/Deployment)
 
 ## Local Development (Build from Source)
 

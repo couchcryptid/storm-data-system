@@ -48,7 +48,16 @@ The stack also includes a **dashboard** (interactive Leaflet map with filters an
 make up
 ```
 
-This builds all service images from source and starts the full stack. The collector runs its job once on startup, fetching CSVs from the mock server.
+This builds all service images from source and starts the full stack. The collector runs its job once on startup, fetching CSVs from the mock server. Once healthy (~30-60 seconds):
+
+| Tool | URL | Description |
+|------|-----|-------------|
+| Dashboard | [localhost:8000](http://localhost:8000) | Interactive storm data explorer |
+| GraphQL API | [localhost:8080/query](http://localhost:8080/query) | Direct GraphQL endpoint |
+| Prometheus | [localhost:9090](http://localhost:9090) | Metrics and monitoring |
+| Kafka UI | [localhost:8082](http://localhost:8082) | Topic inspection and consumer groups |
+
+See the [Demo](docs/Demo.md) page for a full walkthrough of the dashboard features and observability tools.
 
 ### Run E2E tests
 
@@ -123,7 +132,7 @@ Go test suite in `e2e/` that runs against the live stack. Tests use `sync.Once` 
 
 ## UAT Tests
 
-Playwright tests in `uat/` that validate the dashboard UI against the live stack. 44 tests covering map rendering, event filtering, timeline interaction, and the GraphQL query panel.
+Playwright tests in `uat/` that validate the dashboard UI against the live stack. 56 tests covering map rendering, color mode switching, date picker, event filtering, county drill-down, keyboard accessibility, timeline interaction, and the GraphQL query panel.
 
 ```sh
 make test-uat        # Start stack + run tests
@@ -170,7 +179,7 @@ cd e2e && go test -v -count=1 -timeout 5m ./...
 docker compose -f compose.yml -f compose.ci.yml down -v
 ```
 
-The `compose.ci.yml` override replaces `build:` directives with `image:` references to `couchcryptid/storm-data-*:latest` on Docker Hub.
+The `compose.ci.yml` override replaces `build:` directives with `image:` references to `brendanvinson/storm-data-*:latest` on Docker Hub.
 
 ## Project Structure
 
@@ -200,6 +209,6 @@ e2e/
   go.mod                Go module
 
 uat/
-  *.spec.ts             Playwright UAT tests (44 tests)
+  *.spec.ts             Playwright UAT tests (56 tests)
   playwright.config.ts  Playwright configuration
 ```

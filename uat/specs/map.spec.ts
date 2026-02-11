@@ -28,6 +28,20 @@ test.describe('Event Map', () => {
     await expect(page.locator('.leaflet-popup-content')).toBeVisible();
   });
 
+  test('color mode dropdown defaults to "By Type"', async ({ dashboardPage: page }) => {
+    const sel = page.locator('#map-color-mode');
+    await expect(sel).toBeVisible();
+    await expect(sel).toHaveValue('type');
+  });
+
+  test('switching color mode to severity re-renders markers', async ({ dashboardPage: page }) => {
+    const markersBefore = await page.locator('.leaflet-interactive').count();
+    await page.locator('#map-color-mode').selectOption('severity');
+    // Markers are re-rendered so count should remain the same.
+    const markersAfter = await page.locator('.leaflet-interactive').count();
+    expect(markersAfter).toBe(markersBefore);
+  });
+
   test('popup contains event details', async ({ dashboardPage: page }) => {
     await page.waitForTimeout(500);
     const marker = page.locator('.leaflet-interactive').first();

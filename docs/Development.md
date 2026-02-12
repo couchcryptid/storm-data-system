@@ -175,3 +175,13 @@ When a change spans multiple services (e.g., adding a new field to the Kafka mes
 5. Update **E2E test assertions** in `storm-data-system/e2e/`
 6. Open coordinated PRs across affected repos
 7. Run `make test-e2e` in this repo to validate the full pipeline
+
+## Related
+
+- [Collector Development](https://github.com/couchcryptid/storm-data-collector/wiki/Development) -- TypeScript build, test, and lint
+- [ETL Development](https://github.com/couchcryptid/storm-data-etl/wiki/Development) -- Go build, test, and lint
+- [API Development](https://github.com/couchcryptid/storm-data-api/wiki/Development) -- Go build, test, lint, and code generation
+- [Shared Development](https://github.com/couchcryptid/storm-data-shared/wiki/Development) -- shared library build and test
+- [[Testing]] -- testing strategy from unit to E2E
+- [[Code Quality]] -- linting, static analysis, and quality gates
+- [[Deployment]] -- running the stack

@@ -218,6 +218,10 @@ Per-type override. At most 3, no duplicate event types.
 | `minMagnitude` | `Float` | Override minimum magnitude for this type |
 | `radiusMiles` | `Float` | Override search radius for this type (max: 200) |
 
+## Client Examples
+
+For curl and Python examples of calling the GraphQL API, see the [API service API Reference](https://github.com/couchcryptid/storm-data-api/wiki/API-Reference#calling-with-curl). The Python example includes a paginated fetch pattern for collecting all results.
+
 ## Example Queries
 
 ### Geographic Radius Search
@@ -285,3 +289,10 @@ The server enforces limits to prevent pathological queries:
 | Page size | 20 max | Caps report count per request |
 | Radius | 200 miles max | Caps geographic search area |
 | Event type filters | 3 max | Limits per-type overrides |
+
+## Related
+
+- [API API Reference](https://github.com/couchcryptid/storm-data-api/wiki/API-Reference) -- service-level API documentation
+- [ETL Enrichment](https://github.com/couchcryptid/storm-data-etl/wiki/Enrichment) -- severity classification and enrichment logic
+- [[Data Model]] -- message shapes, event types, and database schema
+- [[Data Flow]] -- how data reaches the API

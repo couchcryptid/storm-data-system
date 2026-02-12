@@ -138,3 +138,12 @@ Services within Docker use `kafka:9092` (internal PLAINTEXT). Host tools use `lo
 ## Production
 
 See [[Architecture]] for the improvement roadmap. For production, replace the mock NOAA server with the real NOAA SPC URL via `REPORTS_BASE_URL`.
+
+## Related
+
+- [Collector Deployment](https://github.com/couchcryptid/storm-data-collector/wiki/Deployment) -- collector Docker image and compose config
+- [ETL Deployment](https://github.com/couchcryptid/storm-data-etl/wiki/Deployment) -- ETL Docker image and compose config
+- [API Deployment](https://github.com/couchcryptid/storm-data-api/wiki/Deployment) -- API Docker image and compose config
+- [[Configuration]] -- environment variables across all services
+- [[Development]] -- prerequisites and multi-repo workflow
+- [[Demo]] -- running and exploring the stack

@@ -142,3 +142,11 @@ All services support configurable log levels via `LOG_LEVEL`:
 The API exposes `dataLagMinutes` via the GraphQL `stormReports` query. This represents the time since the most recent `processed_at` timestamp in PostgreSQL. During storm season, a lag exceeding 2 hours may indicate a pipeline problem.
 
 See [[Architecture]] for the improvement roadmap, including Prometheus alerting on data lag.
+
+## Related
+
+- [Shared Architecture](https://github.com/couchcryptid/storm-data-shared/wiki/Architecture) -- shared observability package (logging, health endpoints)
+- [[Architecture]] -- system design and improvement roadmap
+- [[Configuration]] -- environment variables including LOG_LEVEL and LOG_FORMAT
+- [[Troubleshooting]] -- diagnosing issues using metrics and logs
+- [[Demo]] -- accessing Prometheus and Kafka UI

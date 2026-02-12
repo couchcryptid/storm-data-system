@@ -236,3 +236,11 @@ Event IDs are deterministic SHA-256 hashes of `event_type|state|lat|lon|time|mag
 - **Replay safety**: Reprocessing the same data produces identical IDs
 
 See [[Architecture]] for the tradeoff analysis on collision risk.
+
+## Related
+
+- [API Data Model](https://github.com/couchcryptid/storm-data-api/wiki/Data-Model) -- service-level database schema and field mapping
+- [ETL Enrichment](https://github.com/couchcryptid/storm-data-etl/wiki/Enrichment) -- how fields are derived during enrichment
+- [[Data Flow]] -- end-to-end data journey
+- [[API Reference]] -- GraphQL types and query interface
+- [[Architecture]] -- system design decisions

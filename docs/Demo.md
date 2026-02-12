@@ -90,3 +90,9 @@ See [[Testing]] for the full testing strategy.
 make down            # Stop containers
 make clean           # Stop containers + remove volumes
 ```
+
+## Related
+
+- [[Deployment]] -- running the stack in CI and production
+- [[Testing]] -- E2E and UAT test suites
+- [[Observability]] -- Prometheus metrics and structured logging

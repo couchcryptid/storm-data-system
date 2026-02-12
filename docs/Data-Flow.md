@@ -143,3 +143,12 @@ Both topics use a single partition in the default configuration. For horizontal 
 | **Idempotent writes** | Deterministic IDs + `ON CONFLICT DO NOTHING` in PostgreSQL |
 | **No data loss** | Offsets not committed on processing failure; messages redelivered on restart |
 | **Poison pill protection** | Malformed messages logged and skipped (offset committed) |
+
+## Related
+
+- [ETL Enrichment](https://github.com/couchcryptid/storm-data-etl/wiki/Enrichment) -- transformation rules, severity classification, geocoding
+- [API Data Model](https://github.com/couchcryptid/storm-data-api/wiki/Data-Model) -- database schema and field mapping
+- [Collector Architecture](https://github.com/couchcryptid/storm-data-collector/wiki/Architecture) -- CSV fetching and raw message format
+- [[Architecture]] -- system design and tradeoffs
+- [[Data Model]] -- message shapes and event types
+- [[API Reference]] -- GraphQL query interface

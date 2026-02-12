@@ -94,3 +94,12 @@ These files are committed to the repository (they contain only local dev credent
 | API | `config.Load()` returns `(*Config, error)` | Exit with error message |
 
 All services fail fast on invalid configuration. No service silently uses zero values for required fields.
+
+## Related
+
+- [Collector Configuration](https://github.com/couchcryptid/storm-data-collector/wiki/Configuration) -- collector-specific environment variables
+- [ETL Configuration](https://github.com/couchcryptid/storm-data-etl/wiki/Configuration) -- ETL-specific environment variables
+- [API Configuration](https://github.com/couchcryptid/storm-data-api/wiki/Configuration) -- API-specific environment variables
+- [Shared Configuration](https://github.com/couchcryptid/storm-data-shared/wiki/Configuration) -- shared config parsing rules
+- [[Deployment]] -- Docker Compose setup and environment files
+- [[Development]] -- cross-service conventions

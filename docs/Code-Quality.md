@@ -205,3 +205,12 @@ Tests are organized in four tiers. See [[Testing]] for the complete strategy, te
 | UAT | Dashboard UI via Playwright | Yes | 1-2 minutes |
 
 All Go tests run with `-race -count=1` (race detector, no caching). The race detector has caught real concurrency bugs and is non-negotiable.
+
+## Related
+
+- [Collector Code Quality](https://github.com/couchcryptid/storm-data-collector/wiki/Code-Quality) -- ESLint, Prettier, and TypeScript checks
+- [ETL Code Quality](https://github.com/couchcryptid/storm-data-etl/wiki/Code-Quality) -- golangci-lint (14 linters) and Go testing
+- [API Code Quality](https://github.com/couchcryptid/storm-data-api/wiki/Code-Quality) -- golangci-lint (15 linters) and GraphQL schema linting
+- [Shared Code Quality](https://github.com/couchcryptid/storm-data-shared/wiki/Code-Quality) -- golangci-lint (12 linters) and govulncheck
+- [[Development]] -- CI pipelines and pre-commit hooks
+- [[Testing]] -- testing strategy from unit to E2E

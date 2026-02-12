@@ -181,6 +181,20 @@ docker compose -f compose.yml -f compose.ci.yml down -v
 
 The `compose.ci.yml` override replaces `build:` directives with `image:` references to `brendanvinson/storm-data-*:latest` on Docker Hub.
 
+## Documentation
+
+See the [project wiki](../../wiki) for detailed documentation:
+
+- [Architecture](../../wiki/Architecture) -- pipeline design, deployment topology, and improvement roadmap
+- [Data Flow](../../wiki/Data-Flow) -- end-to-end data journey from NOAA CSV to GraphQL
+- [Configuration](../../wiki/Configuration) -- environment variables across all services
+- [Development](../../wiki/Development) -- multi-repo workflow, CI conventions, and cross-service patterns
+- [Testing](../../wiki/Testing) -- E2E and UAT testing strategies
+- [Observability](../../wiki/Observability) -- health checks, metrics, and structured logging
+- [Troubleshooting](../../wiki/Troubleshooting) -- common issues and their solutions
+- [Common Tasks](../../wiki/Common-Tasks) -- step-by-step guides for adding fields, enrichment rules, and report types
+- [Demo](../../wiki/Demo) -- dashboard walkthrough and observability tools
+
 ## Project Structure
 
 ```

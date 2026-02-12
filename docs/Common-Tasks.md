@@ -137,3 +137,11 @@ make down        # Tear down when done
 ```
 
 The collector runs its job once on startup, so data will flow through within seconds of the stack starting.
+
+## Related
+
+- [ETL Enrichment](https://github.com/couchcryptid/storm-data-etl/wiki/Enrichment) -- enrichment rules and severity classification
+- [API Data Model](https://github.com/couchcryptid/storm-data-api/wiki/Data-Model) -- database schema and field mapping
+- [[Development]] -- multi-repo workflow and CI
+- [[Data Model]] -- message shapes and event types
+- [[Testing]] -- running E2E and UAT tests

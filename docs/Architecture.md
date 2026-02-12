@@ -105,3 +105,13 @@ Ingest volume is low (hundreds of records per day during storm season) and doesn
 **Read replicas** -- Add PostgreSQL read replicas to scale query throughput. The API's read-heavy workload (GraphQL queries) is a natural fit for read replicas, while the single writer (Kafka consumer) continues targeting the primary.
 
 **ML enrichment** -- Add a machine learning step to the ETL pipeline for damage estimation, storm path prediction, or severity classification beyond the current rule-based approach.
+
+## Related
+
+- [Collector Architecture](https://github.com/couchcryptid/storm-data-collector/wiki/Architecture) -- CSV fetching, retry strategy, and Kafka publishing
+- [ETL Architecture](https://github.com/couchcryptid/storm-data-etl/wiki/Architecture) -- hexagonal design, enrichment pipeline, and offset strategy
+- [API Architecture](https://github.com/couchcryptid/storm-data-api/wiki/Architecture) -- GraphQL resolvers, store layer, and query protection
+- [Shared Architecture](https://github.com/couchcryptid/storm-data-shared/wiki/Architecture) -- package design and interface contracts
+- [[Data Flow]] -- end-to-end data journey from NOAA to GraphQL
+- [[Configuration]] -- environment variables across all services
+- [[Observability]] -- health checks, metrics, and structured logging

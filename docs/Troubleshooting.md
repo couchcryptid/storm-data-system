@@ -118,3 +118,10 @@ Common issues and their solutions when running the storm data pipeline.
 **Symptom**: Container killed by OOM or Docker Desktop becomes slow.
 
 **Fix**: The `compose.yml` sets memory limits. If you need to reduce total usage, stop services you don't need: `docker compose up kafka postgres api` (skip collector, ETL, monitoring).
+
+## Related
+
+- [[Observability]] -- metrics and logs for diagnosing issues
+- [[Configuration]] -- environment variables and validation
+- [[Common Tasks]] -- step-by-step guides for common operations
+- [[Deployment]] -- Docker Compose setup and port mapping

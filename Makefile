@@ -1,4 +1,4 @@
-.PHONY: up down logs test-e2e test-uat build clean ps wait-healthy docs-svg
+.PHONY: up down logs test-e2e build clean ps wait-healthy
 
 # --- Stack Management ---
 
@@ -41,15 +41,6 @@ test-e2e: up ## Run E2E tests (starts stack first)
 test-e2e-only: ## Run E2E tests against an already-running stack
 	cd e2e && go test -v -count=1 -timeout 5m ./...
 
-# --- UAT Tests ---
-
-test-uat: up ## Run UAT tests (starts stack first)
-	@echo "Running UAT tests..."
-	cd uat && npx playwright test
-
-test-uat-only: ## Run UAT tests against an already-running stack
-	cd uat && npx playwright test
-
 # --- Helpers ---
 
 wait-healthy: ## Wait for all services to be healthy
@@ -57,17 +48,6 @@ wait-healthy: ## Wait for all services to be healthy
 	@docker compose ps --format json | grep -q '"Health":"healthy"' || \
 		(echo "Some services are not healthy. Run 'make ps' to check." && exit 1)
 	@echo "All services healthy."
-
-# --- Documentation ---
-
-docs-svg: ## Re-export .excalidraw files to SVG via kroki.io
-	@for f in docs/*.excalidraw; do \
-		echo "Exporting $$f → $${f}.svg"; \
-		curl -s -X POST https://kroki.io/excalidraw/svg \
-			-H "Content-Type: text/plain" \
-			-d @"$$f" -o "$${f}.svg"; \
-	done
-	@echo "Done. SVGs updated in docs/"
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \

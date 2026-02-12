@@ -1,20 +1,8 @@
 **Storm Data System**
 
 - [[Home]]
-- [[Demo]]
 - [[Architecture]]
-- [[Data Flow]]
-- [[Data Model]]
-- [[API Reference]]
-- [[Configuration]]
-- [[Deployment]]
 - [[Development]]
-- [[Testing]]
-- [[Code Quality]]
-- [[Observability]]
-- [[Research]]
-- [[Common Tasks]]
-- [[Troubleshooting]]
 
 ---
 

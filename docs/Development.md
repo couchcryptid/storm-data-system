@@ -67,7 +67,7 @@ make test-e2e    # Start stack + run E2E tests
 make down        # Tear down
 ```
 
-See [[Deployment]] for the complete command reference and [[Testing]] for the testing strategy.
+See the Makefile for the complete command reference.
 
 ## Shared Library
 
@@ -182,6 +182,4 @@ When a change spans multiple services (e.g., adding a new field to the Kafka mes
 - [ETL Development](https://github.com/couchcryptid/storm-data-etl/wiki/Development) -- Go build, test, and lint
 - [API Development](https://github.com/couchcryptid/storm-data-api/wiki/Development) -- Go build, test, lint, and code generation
 - [Shared Development](https://github.com/couchcryptid/storm-data-shared/wiki/Development) -- shared library build and test
-- [[Testing]] -- testing strategy from unit to E2E
-- [[Code Quality]] -- linting, static analysis, and quality gates
-- [[Deployment]] -- running the stack
+- [[Architecture]] -- system design, data flow, and tradeoffs

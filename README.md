@@ -57,8 +57,6 @@ This builds all service images from source and starts the full stack. The collec
 | Prometheus | [localhost:9090](http://localhost:9090) | Metrics and monitoring |
 | Kafka UI | [localhost:8082](http://localhost:8082) | Topic inspection and consumer groups |
 
-See the [Demo](docs/Demo.md) page for a full walkthrough of the dashboard features and observability tools.
-
 ### Run E2E tests
 
 ```sh
@@ -130,15 +128,6 @@ Go test suite in `e2e/` that runs against the live stack. Tests use `sync.Once` 
 | `TestSortByMagnitude`      | Reports sort descending by magnitude                       |
 | `TestGeoRadiusFilter`      | Geo radius filter returns nearby reports only              |
 
-## UAT Tests
-
-Playwright tests in `uat/` that validate the dashboard UI against the live stack. 56 tests covering map rendering, color mode switching, date picker, event filtering, county drill-down, keyboard accessibility, timeline interaction, and the GraphQL query panel.
-
-```sh
-make test-uat        # Start stack + run tests
-make test-uat-only   # Run against already-running stack
-```
-
 ### Environment Overrides
 
 Tests default to `localhost` URLs. Override with environment variables:
@@ -159,8 +148,6 @@ make clean           # Stop, remove containers, volumes, and orphans
 make build           # Build all service images
 make test-e2e        # Start stack + run E2E tests
 make test-e2e-only   # Run E2E tests against an already-running stack
-make test-uat        # Start stack + run UAT (Playwright) tests
-make test-uat-only   # Run UAT tests against an already-running stack
 make ps              # Show running services
 make logs            # Tail logs from all services
 make logs-collector  # Tail collector logs
@@ -185,15 +172,8 @@ The `compose.ci.yml` override replaces `build:` directives with `image:` referen
 
 See the [project wiki](../../wiki) for detailed documentation:
 
-- [Architecture](../../wiki/Architecture) -- pipeline design, deployment topology, and improvement roadmap
-- [Data Flow](../../wiki/Data-Flow) -- end-to-end data journey from NOAA CSV to GraphQL
-- [Configuration](../../wiki/Configuration) -- environment variables across all services
-- [Development](../../wiki/Development) -- multi-repo workflow, CI conventions, and cross-service patterns
-- [Testing](../../wiki/Testing) -- E2E and UAT testing strategies
-- [Observability](../../wiki/Observability) -- health checks, metrics, and structured logging
-- [Troubleshooting](../../wiki/Troubleshooting) -- common issues and their solutions
-- [Common Tasks](../../wiki/Common-Tasks) -- step-by-step guides for adding fields, enrichment rules, and report types
-- [Demo](../../wiki/Demo) -- dashboard walkthrough and observability tools
+- [Architecture](../../wiki/Architecture) -- Pipeline design, deployment topology, and improvement roadmap
+- [Development](../../wiki/Development) -- Multi-repo workflow, CI conventions, and cross-service patterns
 
 ## Project Structure
 
@@ -221,8 +201,4 @@ e2e/
   e2e_test.go           E2E test suite (13 tests)
   helpers_test.go       GraphQL client, health polling, data propagation gate
   go.mod                Go module
-
-uat/
-  *.spec.ts             Playwright UAT tests (56 tests)
-  playwright.config.ts  Playwright configuration
 ```

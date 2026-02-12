@@ -205,14 +205,6 @@ type stormReport struct {
 	Comments     string      `json:"comments"`
 	TimeBucket   string      `json:"timeBucket"`
 	ProcessedAt  string      `json:"processedAt"`
-	Geocoding    geocoding   `json:"geocoding"`
-}
-
-type geocoding struct {
-	FormattedAddress string  `json:"formattedAddress"`
-	PlaceName        string  `json:"placeName"`
-	Confidence       float64 `json:"confidence"`
-	Source           string  `json:"source"`
 }
 
 type measurement struct {

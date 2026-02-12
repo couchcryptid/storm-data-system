@@ -1,10 +1,17 @@
 # Architecture
 
-System design, tradeoffs, and improvement roadmap for the storm data pipeline. For a detailed look at how data moves through the system, see [[Data Flow]]. For per-service configuration, see [[Configuration]].
+System design, tradeoffs, and improvement roadmap for the storm data pipeline.
 
 ## System Overview
 
-![System Architecture](architecture.excalidraw.svg)
+```
+┌─────────────┐     ┌───────────┐     ┌───────────────────────┐     ┌─────┐     ┌───────────────────────┐     ┌─────┐     ┌──────────┐
+│  NOAA CSVs  │────>│ Collector │────>│ Kafka                 │────>│ ETL │────>│ Kafka                 │────>│ API │────>│PostgreSQL│
+│  (hail,     │     │ (TS)      │     │ raw-weather-reports   │     │(Go) │     │ transformed-weather-  │     │(Go) │     │          │
+│  torn,wind) │     └───────────┘     └───────────────────────┘     └─────┘     │ data                  │     └──┬──┘     └──────────┘
+└─────────────┘                                                                 └───────────────────────┘        │
+                                                                                                           GraphQL /query
+```
 
 Three services, two Kafka topics, one database. Data flows left to right. Clients query the GraphQL API on the far right.
 
@@ -78,7 +85,7 @@ The ETL skips malformed messages (logs a warning, commits the offset, continues)
 
 **Tradeoff**: Silently skipping messages can hide data quality issues. A dead letter queue (DLQ) would be better -- see improvements below.
 
-For the complete data model and message shapes at each stage, see [[Data Model]]. For observability across all services, see [[Observability]].
+For the complete data model and message shapes at each stage, see the ETL [Enrichment](https://github.com/couchcryptid/storm-data-etl/wiki/Enrichment) rules and the API [Architecture](https://github.com/couchcryptid/storm-data-api/wiki/Architecture) database schema.
 
 ## Improvements
 
@@ -112,6 +119,4 @@ Ingest volume is low (hundreds of records per day during storm season) and doesn
 - [ETL Architecture](https://github.com/couchcryptid/storm-data-etl/wiki/Architecture) -- hexagonal design, enrichment pipeline, and offset strategy
 - [API Architecture](https://github.com/couchcryptid/storm-data-api/wiki/Architecture) -- GraphQL resolvers, store layer, and query protection
 - [Shared Architecture](https://github.com/couchcryptid/storm-data-shared/wiki/Architecture) -- package design and interface contracts
-- [[Data Flow]] -- end-to-end data journey from NOAA to GraphQL
-- [[Configuration]] -- environment variables across all services
-- [[Observability]] -- health checks, metrics, and structured logging
+- [[Development]] -- running the stack, E2E tests, and conventions

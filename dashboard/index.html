@@ -302,16 +302,6 @@
       border-bottom: 1px solid var(--border);
     }
     .controls label { font-size: 12px; color: var(--text-dim); }
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 4px 10px;
-    }
-    .filter-group label.disabled { opacity: 0.4; }
     .controls select, .controls input {
       background: var(--bg);
       color: var(--text);
@@ -540,14 +530,9 @@
             <option value="wind">Wind</option>
           </select>
         </label>
-        <div class="filter-group">
-          <label>State:
-            <select id="filter-state"><option value="">All</option></select>
-          </label>
-          <label id="county-label" class="disabled">County:
-            <select id="filter-county" disabled><option value="">Select a state</option></select>
-          </label>
-        </div>
+        <label>State:
+          <select id="filter-state"><option value="">All</option></select>
+        </label>
         <label>Severity:
           <select id="filter-severity">
             <option value="">All</option>
@@ -807,7 +792,6 @@ function applyFilters() {
   const typeF = document.getElementById('filter-type').value;
   const stateF = document.getElementById('filter-state').value;
   const sevF = document.getElementById('filter-severity').value;
-  const countyF = document.getElementById('filter-county').value;
 
   markers.clearLayers();
   const tbody = document.getElementById('report-body');
@@ -817,7 +801,6 @@ function applyFilters() {
     if (typeF && r.eventType !== typeF) return false;
     if (stateF && r.location.state !== stateF) return false;
     if (sevF && r.measurement.severity !== sevF) return false;
-    if (countyF && r.location.county !== countyF) return false;
     return true;
   });
 
@@ -847,29 +830,6 @@ function populateStateFilter(reports) {
     const opt = document.createElement('option');
     opt.value = s;
     opt.textContent = s;
-    sel.appendChild(opt);
-  }
-}
-
-function populateCountyFilter(reports, state) {
-  const sel = document.getElementById('filter-county');
-  const lbl = document.getElementById('county-label');
-  if (!state) {
-    sel.innerHTML = '<option value="">Select a state</option>';
-    sel.disabled = true;
-    lbl.classList.add('disabled');
-    return;
-  }
-  sel.innerHTML = '<option value="">All</option>';
-  sel.disabled = false;
-  lbl.classList.remove('disabled');
-  const counties = [...new Set(
-    reports.filter(r => r.location.state === state).map(r => r.location.county)
-  )].filter(Boolean).sort();
-  for (const c of counties) {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
     sel.appendChild(opt);
   }
 }
@@ -1003,9 +963,8 @@ async function loadReports(timeRange) {
     renderFreshness(meta);
     populateStateFilter(allReports);
 
-    // Reset dependent filters
+    // Reset filters
     document.getElementById('filter-state').value = '';
-    populateCountyFilter(allReports, '');
     document.getElementById('filter-type').value = '';
     document.getElementById('filter-severity').value = '';
     applyFilters();
@@ -1072,12 +1031,8 @@ async function init() {
 // ── Event listeners ─────────────────────────────────────────
 
 document.getElementById('filter-type').addEventListener('change', applyFilters);
-document.getElementById('filter-state').addEventListener('change', () => {
-  populateCountyFilter(allReports, document.getElementById('filter-state').value);
-  applyFilters();
-});
+document.getElementById('filter-state').addEventListener('change', applyFilters);
 document.getElementById('filter-severity').addEventListener('change', applyFilters);
-document.getElementById('filter-county').addEventListener('change', applyFilters);
 document.getElementById('map-color-mode').addEventListener('change', applyFilters);
 
 document.getElementById('date-from').addEventListener('change', () => {

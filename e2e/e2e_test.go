@@ -117,7 +117,6 @@ func TestReportEnrichment(t *testing.T) {
 				id eventType
 				measurement { magnitude unit severity }
 				sourceOffice timeBucket processedAt
-				geocoding { formattedAddress placeName confidence source }
 				geo { lat lon }
 				location { raw name state county }
 			}

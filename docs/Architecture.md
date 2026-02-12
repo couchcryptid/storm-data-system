@@ -4,16 +4,9 @@ System design, tradeoffs, and improvement roadmap for the storm data pipeline.
 
 ## System Overview
 
-```
-┌─────────────┐     ┌───────────┐     ┌───────────────────────┐     ┌─────┐     ┌───────────────────────┐     ┌─────┐     ┌──────────┐
-│  NOAA CSVs  │────>│ Collector │────>│ Kafka                 │────>│ ETL │────>│ Kafka                 │────>│ API │────>│PostgreSQL│
-│  (hail,     │     │ (TS)      │     │ raw-weather-reports   │     │(Go) │     │ transformed-weather-  │     │(Go) │     │          │
-│  torn,wind) │     └───────────┘     └───────────────────────┘     └─────┘     │ data                  │     └──┬──┘     └──────────┘
-└─────────────┘                                                                 └───────────────────────┘        │
-                                                                                                           GraphQL /query
-```
+![System Architecture](architecture.excalidraw.svg)
 
-Three services, two Kafka topics, one database. Data flows left to right. Clients query the GraphQL API on the far right.
+Three services, two Kafka topics, one database. Data flows left to right through a collector → ETL → API pipeline. Clients query the GraphQL API on the far right.
 
 ## Design Tradeoffs
 

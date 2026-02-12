@@ -182,17 +182,15 @@ See the [project wiki](../../wiki) for detailed documentation:
 compose.yml             Unified Docker Compose stack (local dev, builds from source)
 compose.ci.yml          CI override (published images from Docker Hub)
 Makefile                Convenience targets for stack management and testing
-.env.kafka              Kafka KRaft broker configuration
-.env.postgres           PostgreSQL credentials
+.env.*                  Service and infrastructure environment files
 
 mock-server/
   main.go               Go HTTP server mimicking NOAA CSV endpoints
-  Dockerfile            Multi-stage build (distroless + busybox)
+  Dockerfile            Multi-stage build
   data/                 NOAA-format CSV test fixtures
 
 dashboard/
   index.html            Single-page dashboard (Leaflet map, filters, timeline)
-  nginx.conf            Nginx config with API reverse proxy
 
 monitoring/
   prometheus/
@@ -201,5 +199,4 @@ monitoring/
 e2e/
   e2e_test.go           E2E test suite (13 tests)
   helpers_test.go       GraphQL client, health polling, data propagation gate
-  go.mod                Go module
 ```

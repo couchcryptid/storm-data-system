@@ -79,7 +79,7 @@ After starting the stack, you can run end-to-end and user acceptance tests:
 
 ```sh
 make test-e2e-only   # 13 Go E2E tests against the GraphQL API
-make test-uat-only   # 50 Playwright tests against the dashboard
+make test-uat-only   # 56 Playwright tests against the dashboard
 ```
 
 See [[Testing]] for the full testing strategy.

@@ -47,6 +47,34 @@ The GraphQL schema is the API contract. The Kafka message shape is defined by th
 
 Transformation functions are pure: same input, same output, no side effects. Data flows through Kafka topics as an immutable pipeline. Enrichment steps are sequential and composable. Mutable state is confined to infrastructure boundaries (database connections, Kafka consumers).
 
+## What the Codebase Reveals
+
+Reading across all five repositories, several patterns emerge that reveal how this system was built and why changes happen the way they do.
+
+### The pipeline is designed to survive partial failure
+
+Every boundary in the system has a fallback: the collector skips 404s and retries 5xx errors, the ETL skips poison pill messages rather than blocking, the API deduplicates via `ON CONFLICT DO NOTHING`. Geocoding is feature-flagged and degrades gracefully. No single component can halt the pipeline. This reflects a priority on availability over strict consistency -- appropriate for a system where stale data is acceptable but missing data is not.
+
+### Tests are the change safety net, not type systems
+
+Go's type system is deliberately not leveraged for domain validation (no sum types, no newtypes for magnitudes). Instead, the test pyramid does the heavy lifting: 14+ linters catch structural issues, unit tests catch logic bugs, integration tests with real Kafka and PostgreSQL catch wiring issues, E2E tests catch cross-service regressions. The race detector runs on every test execution. This means changes can be made confidently because the feedback loop is fast and comprehensive -- not because the compiler prevents bad states.
+
+### Schemas are contracts, code is generated
+
+The GraphQL schema, database migration, and Kafka message shape (defined by mock data) are the sources of truth. Code is generated from or validated against these schemas. This means most changes start with a schema change and ripple outward: update the `.graphqls` file, run `go generate`, update the migration, regenerate mock data. The 8-step "Add a New Field" guide in [[Common Tasks]] codifies this workflow. Changes are motivated by schema evolution, not code refactoring.
+
+### Observability is built in, not bolted on
+
+Every service registers Prometheus metrics at construction time. Health endpoints, readiness probes, and structured logging are standard across all services via the shared library. The Docker Compose stack includes Prometheus and Kafka UI by default. This means operational changes (adding a metric, adjusting a health check) are routine -- the infrastructure for observability already exists and just needs a new counter or histogram.
+
+### Multi-repo forces explicit boundaries
+
+Each service has its own CI, release cycle, and Docker image. Cross-service changes require coordinated PRs. This creates friction by design: it forces changes to be backward-compatible (the API can't assume a new Kafka field exists until the ETL is deployed) and makes the blast radius of any change visible. The system repo's E2E tests are the integration point that validates the full pipeline works as a unit.
+
+### The shared library is a utility belt, not a framework
+
+`storm-data-shared` provides logging, health endpoints, config parsing, and retry logic -- all as standalone functions with primitive arguments. Services wrap these in thin adapters. This means shared library changes are low-risk (no service depends on internal implementation details) and service-specific changes don't pollute the shared code.
+
 ## Quality Tooling by Service
 
 | Tool | Collector | ETL | API | Shared |

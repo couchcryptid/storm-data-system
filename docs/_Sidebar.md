@@ -1,6 +1,7 @@
 **Storm Data System**
 
 - [[Home]]
+- [[Demo]]
 - [[Architecture]]
 - [[Data Flow]]
 - [[Data Model]]
@@ -11,5 +12,6 @@
 - [[Testing]]
 - [[Code Quality]]
 - [[Observability]]
+- [[Research]]
 - [[Common Tasks]]
 - [[Troubleshooting]]

@@ -33,6 +33,8 @@ jobs:
 
       - name: Start stack with published images
         run: make up-ci
+        env:
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
 
       - name: Run E2E tests
         run: make test-e2e-only

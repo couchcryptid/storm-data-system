@@ -108,6 +108,8 @@ services:
     ports:
       - "8081:8080"
     env_file: .env.etl
+    environment:
+      - MAPBOX_TOKEN=${MAPBOX_TOKEN:-}
     depends_on:
       kafka-init:
         condition: service_completed_successfully

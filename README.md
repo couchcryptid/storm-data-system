@@ -29,26 +29,15 @@ The stack also includes a **dashboard** (interactive Leaflet map with filters an
 
 ### Prerequisites
 
-- Go 1.25+
 - Docker and Docker Compose
-- Sibling service repos cloned alongside this repo:
-
-```
-~/Projects/hailtrace/
-  storm-data-collector/
-  storm-data-etl/
-  storm-data-api/
-  storm-data-shared/          <-- shared Go library (config, observability, retry)
-  storm-data-system/          <-- this repo
-```
 
 ### Run the full stack
 
 ```sh
-make up
+make up-ci
 ```
 
-This builds all service images from source and starts the full stack. The collector runs its job once on startup, fetching CSVs from the mock server. Once healthy (~30-60 seconds):
+This pulls published service images from Docker Hub and starts the full stack. The collector runs its job once on startup, fetching CSVs from the mock server. Once healthy (~30-60 seconds):
 
 | Tool | URL | Description |
 |------|-----|-------------|
@@ -60,7 +49,7 @@ This builds all service images from source and starts the full stack. The collec
 ### Run E2E tests
 
 ```sh
-make test-e2e        # Starts stack + runs tests
+make test-e2e-ci     # Starts stack (published images) + runs tests
 make test-e2e-only   # Runs tests against an already-running stack
 ```
 
@@ -73,17 +62,17 @@ make clean           # Stop containers + remove volumes
 
 ## Services
 
-| Service        | Image / Build                | Host Port | Internal Port | Health Check |
-| -------------- | ---------------------------- | --------- | ------------- | ------------ |
-| `kafka`        | `apache/kafka:3.7.0`         | 29092     | 9092          | Topic list   |
-| `postgres`     | `postgres:16`                | 5432      | 5432          | `pg_isready` |
-| `mock-server`  | `./mock-server`              | 8090      | 8080          | `/healthz`   |
-| `collector`    | `../storm-data-collector`    | 3000      | 3000          | `/healthz`   |
-| `etl`          | `../storm-data-etl`  | 8081      | 8080          | `/healthz`   |
-| `api`          | `../storm-data-api`  | 8080      | 8080          | `/healthz`   |
-| `dashboard`    | `nginx:1-alpine`     | 8000      | 80            | HTTP GET `/` |
-| `prometheus`   | `prom/prometheus:v3.2.1` | 9090  | 9090          | `promtool check healthy` |
-| `kafka-ui`     | `provectuslabs/kafka-ui:latest` | 8082 | 8080     | `/actuator/health` |
+| Service        | Image                                          | Host Port | Internal Port | Health Check |
+| -------------- | ---------------------------------------------- | --------- | ------------- | ------------ |
+| `kafka`        | `apache/kafka:3.7.0`                           | 29092     | 9092          | Topic list   |
+| `postgres`     | `postgres:16`                                  | 5432      | 5432          | `pg_isready` |
+| `mock-server`  | `./mock-server`                                | 8090      | 8080          | `/healthz`   |
+| `collector`    | `brendanvinson/storm-data-collector:latest`    | 3000      | 3000          | `/healthz`   |
+| `etl`          | `brendanvinson/storm-data-etl:latest`          | 8081      | 8080          | `/healthz`   |
+| `api`          | `brendanvinson/storm-data-api:latest`          | 8080      | 8080          | `/healthz`   |
+| `dashboard`    | `nginx:1-alpine`                               | 8000      | 80            | HTTP GET `/` |
+| `prometheus`   | `prom/prometheus:v3.2.1`                       | 9090      | 9090          | `promtool check healthy` |
+| `kafka-ui`     | `provectuslabs/kafka-ui:latest`                | 8082      | 8080          | `/actuator/health` |
 
 ## Kafka Topics
 
@@ -140,13 +129,26 @@ Tests default to `localhost` URLs. Override with environment variables:
 
 ## Development
 
+To build from local source instead of published images, clone the sibling service repos alongside this repo:
+
+```
+storm-data-collector/
+storm-data-etl/
+storm-data-api/
+storm-data-shared/          <-- shared Go library (config, observability, retry)
+storm-data-system/          <-- this repo
+```
+
+Then use `make up` to build from source:
+
 ```
 make up              # Start the full stack (builds from local source)
 make up-ci           # Start the full stack using published images
 make down            # Stop and remove all containers
 make clean           # Stop, remove containers, volumes, and orphans
 make build           # Build all service images
-make test-e2e        # Start stack + run E2E tests
+make test-e2e        # Start stack (from source) + run E2E tests
+make test-e2e-ci     # Start stack (published images) + run E2E tests
 make test-e2e-only   # Run E2E tests against an already-running stack
 make ps              # Show running services
 make logs            # Tail logs from all services
@@ -158,15 +160,13 @@ make help            # Show all available targets
 
 ## CI
 
-For CI environments where service images are published to a container registry:
+The `compose.ci.yml` override replaces local `build:` directives with `image:` references to published Docker Hub images (`brendanvinson/storm-data-*:latest`). Quick Start uses this by default via `make up-ci`. CI pipelines run E2E tests against these same images:
 
 ```sh
-docker compose -f compose.yml -f compose.ci.yml up -d --wait
+make up-ci
 cd e2e && go test -v -count=1 -timeout 5m ./...
-docker compose -f compose.yml -f compose.ci.yml down -v
+make down
 ```
-
-The `compose.ci.yml` override replaces `build:` directives with `image:` references to `brendanvinson/storm-data-*:latest` on Docker Hub.
 
 ## Documentation
 

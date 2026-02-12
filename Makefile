@@ -1,4 +1,4 @@
-.PHONY: up down logs test-e2e build clean ps wait-healthy
+.PHONY: up up-ci down logs test-e2e test-e2e-ci test-e2e-only build clean ps wait-healthy help
 
 # --- Stack Management ---
 
@@ -34,7 +34,11 @@ logs-api: ## Tail API logs
 
 # --- E2E Tests ---
 
-test-e2e: up ## Run E2E tests (starts stack first)
+test-e2e: up ## Run E2E tests (starts stack, builds from source)
+	@echo "Running E2E tests..."
+	cd e2e && go test -v -count=1 -timeout 5m ./...
+
+test-e2e-ci: up-ci ## Run E2E tests (starts stack, published images)
 	@echo "Running E2E tests..."
 	cd e2e && go test -v -count=1 -timeout 5m ./...
 

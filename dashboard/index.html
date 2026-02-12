@@ -91,6 +91,20 @@
     .date-range-end { display: none; }
     .date-controls.range-mode .date-range-end { display: contents; }
 
+    /* Data date badge */
+    .data-date {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .data-date-label { color: var(--text-dim); }
+    .data-date-value { font-weight: 600; color: var(--accent); }
+
     /* Data freshness badge */
     .freshness {
       display: flex;
@@ -458,6 +472,10 @@
         <input type="date" id="date-to" aria-label="End date"></span>
         <label class="range-toggle"><input type="checkbox" id="date-range-toggle"> Range</label>
       </div>
+      <div id="data-date" class="data-date" style="display:none">
+        <span class="data-date-label">Report date:</span>
+        <span id="data-date-value" class="data-date-value">--</span>
+      </div>
       <div id="freshness" class="freshness" style="display:none">
         <span class="freshness-label">Data lag:</span>
         <span id="freshness-value" class="freshness-value">--</span>
@@ -635,6 +653,23 @@ function fmtTime(dt) {
   if (!dt) return '';
   const d = new Date(dt);
   return d.toISOString().slice(0, 16).replace('T', ' ');
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC'
+  });
+}
+
+function fmtDateRange(reports) {
+  if (reports.length === 0) return null;
+  const times = reports.map(r => new Date(r.eventTime)).sort((a, b) => a - b);
+  const first = times[0];
+  const last = times[times.length - 1];
+  const firstDate = first.toISOString().slice(0, 10);
+  const lastDate = last.toISOString().slice(0, 10);
+  if (firstDate === lastDate) return fmtDate(first);
+  return `${fmtDate(first)} – ${fmtDate(last)}`;
 }
 
 function fmtMaxMag(m) {
@@ -980,11 +1015,17 @@ async function loadReports(timeRange) {
       statusEl.className = 'status';
     }
 
+    const dateEl = document.getElementById('data-date');
+    const dateValEl = document.getElementById('data-date-value');
     const dateRange = document.getElementById('date-range');
     if (allReports.length > 0) {
-      const times = allReports.map(r => new Date(r.eventTime)).sort((a, b) => a - b);
-      dateRange.textContent = `${times[0].toISOString().slice(0, 10)} — ${times[times.length - 1].toISOString().slice(0, 10)}`;
+      const label = fmtDateRange(allReports);
+      dateValEl.textContent = label;
+      dateEl.style.display = '';
+      dateRange.textContent = label;
     } else {
+      dateValEl.textContent = '--';
+      dateEl.style.display = 'none';
       dateRange.textContent = 'No data';
     }
   } catch (err) {

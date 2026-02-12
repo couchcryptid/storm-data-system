@@ -82,11 +82,11 @@ For the complete data model and message shapes at each stage, see the ETL [Enric
 
 ## Improvements
 
-Ingest volume is low (hundreds of records per day during storm season) and doesn't need to scale. The improvements below focus on query performance, API reliability, and developer experience.
+Ingest volume is low (hundreds of records per day during storm season). The collector and ETL are massively overprovisioned and don't need to scale. The improvements below focus on the surfaces that matter: API query performance, storage scalability, and developer experience.
 
 ### Near-term
 
-**Schema registry** -- Introduce Avro or Protobuf schemas with a Confluent Schema Registry (or Buf). Currently the Kafka message format is an implicit JSON contract. A schema registry would catch breaking changes at publish time rather than at consumer parse time.
+**Schema registry** -- Introduce Avro or Protobuf schemas with a Confluent Schema Registry (or Buf). Currently the Kafka message format is an implicit JSON contract between three repos. A schema registry would catch breaking changes at publish time rather than at consumer parse time.
 
 **OpenTelemetry tracing** -- Add distributed tracing across all three services. Each Kafka message would carry a trace context header, enabling end-to-end latency visualization from ingest to query response.
 
@@ -94,17 +94,35 @@ Ingest volume is low (hundreds of records per day during storm season) and doesn
 
 ### Medium-term
 
-**API response caching** -- Add an in-memory or Redis cache in front of PostgreSQL for frequently-queried time ranges and aggregations. Storm data is append-only, so cache invalidation only needs to happen on new ingestion batches.
-
-**PostgreSQL partitioning** -- Partition the `storm_reports` table by `event_time` (monthly or yearly). This would improve query performance for time-range filters and simplify data retention as the dataset grows.
-
-**GraphQL subscriptions** -- Add WebSocket-based subscriptions so clients can receive real-time updates when new storm reports are ingested. gqlgen supports subscriptions natively.
+**API response caching** -- Add an in-memory or Redis cache in front of PostgreSQL for frequently-queried time ranges and aggregations. Storm data is append-only, so cache invalidation only needs to happen on new ingestion batches. This is the first scaling lever for the read-heavy API workload.
 
 ### Long-term
 
 **Read replicas** -- Add PostgreSQL read replicas to scale query throughput. The API's read-heavy workload (GraphQL queries) is a natural fit for read replicas, while the single writer (Kafka consumer) continues targeting the primary.
 
-**ML enrichment** -- Add a machine learning step to the ETL pipeline for damage estimation, storm path prediction, or severity classification beyond the current rule-based approach.
+**PostgreSQL partitioning** -- Partition the `storm_reports` table by `event_time` (monthly or yearly). At current ingest rates the dataset grows slowly and existing indexes handle query performance well. Partitioning becomes relevant if retention spans many years or query patterns shift toward large time-range scans.
+
+**GraphQL subscriptions** -- Add WebSocket-based subscriptions so clients can receive updates when new storm reports are ingested. gqlgen supports subscriptions natively. The current data cadence is daily batch collection, so subscriptions would primarily benefit workflows that poll for fresh data after each ingest cycle rather than true real-time streaming.
+
+**Vector tile serving** -- The current query layer (dynamic filters, bounding box pre-filter, attribute filtering) is structurally similar to a vector tile server's per-tile spatial query. Migrating to PostGIS (see Haversine scaling note above) would enable `ST_AsMVT` for native Mapbox Vector Tile generation directly from SQL:
+
+```sql
+SELECT ST_AsMVT(tile, 'storms')
+FROM (
+  SELECT ST_AsMVTGeom(geom, ST_TileEnvelope(z, x, y)) AS geom,
+         event_type, severity, magnitude
+  FROM storm_reports
+  WHERE geom && ST_TileEnvelope(z, x, y)
+    AND event_type = ANY($1)
+    AND event_time BETWEEN $2 AND $3
+) AS tile
+```
+
+The existing `querybuilder.go` filter logic would translate to tile-coordinate bounding boxes (z/x/y → lat/lon envelope) with the same attribute filters. Client-side rendering (Mapbox GL JS or MapLibre) would replace server-side serialization, offloading geometry rendering to the browser's GPU. For user-defined filter criteria, the GraphQL API could accept filter definitions and return tile endpoint URLs, keeping the schema-first contract while enabling dynamic map layers.
+
+In production, vector tile serving would likely be a dedicated service — tile rendering has different scaling and caching characteristics (bursty tile requests on pan/zoom, aggressive CDN cacheability) than the GraphQL data API. The spatial query patterns and filter logic from the API would transfer directly, with shared components (config, observability, health endpoints) pulled from `storm-data-shared`.
+
+**ML enrichment** -- Exploratory. The current rule-based severity classification serves existing use cases well. A machine learning step in the ETL pipeline (damage estimation, storm path prediction, or severity classification beyond thresholds) could add value but is not driven by a current user need. Worth revisiting if the dataset or user base grows to warrant it.
 
 ## Related
 

@@ -23,7 +23,7 @@ func ensureDataPropagated(t *testing.T) {
 	dataReady.Do(func() {
 		waitForHealthy(t, "api", apiURL())
 
-		query := `{ stormReports(filter: { timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" } }) { totalCount } }`
+		query := `{ stormReports(filter: { ` + fixtureTimeRange + ` }) { totalCount } }`
 		deadline := time.Now().Add(120 * time.Second)
 		var lastCount int
 		for time.Now().Before(deadline) {

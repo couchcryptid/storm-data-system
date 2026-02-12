@@ -1,4 +1,4 @@
-.PHONY: up up-ci down logs test-e2e test-e2e-ci test-e2e-only build clean ps wait-healthy help
+.PHONY: up up-ci down logs test-e2e test-e2e-ci test-e2e-only build clean ps wait-healthy reset-db help
 
 # --- Stack Management ---
 
@@ -34,11 +34,16 @@ logs-api: ## Tail API logs
 
 # --- E2E Tests ---
 
-test-e2e: up ## Run E2E tests (starts stack, builds from source)
+reset-db: ## Truncate storm_reports and restart collector for clean E2E data
+	@docker compose exec -T postgres psql -U storm -d stormdata -c "TRUNCATE storm_reports;" > /dev/null
+	@docker compose restart collector > /dev/null 2>&1
+	@echo "Database reset. Collector restarting..."
+
+test-e2e: up reset-db ## Run E2E tests (starts stack, builds from source)
 	@echo "Running E2E tests..."
 	cd e2e && go test -v -count=1 -timeout 5m ./...
 
-test-e2e-ci: up-ci ## Run E2E tests (starts stack, published images)
+test-e2e-ci: up-ci reset-db ## Run E2E tests (starts stack, published images)
 	@echo "Running E2E tests..."
 	cd e2e && go test -v -count=1 -timeout 5m ./...
 

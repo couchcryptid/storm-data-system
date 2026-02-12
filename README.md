@@ -99,7 +99,7 @@ Total: **271 records** across **11 states** (real NOAA SPC data from April 26, 2
 
 ## E2E Tests
 
-Go test suite in `e2e/` that runs against the live stack. Tests use `sync.Once` to poll the GraphQL API for data propagation before running assertions.
+Go test suite in `e2e/` that runs against the live stack. Tests use `sync.Once` to poll the GraphQL API for data propagation before running assertions. Queries are scoped to the fixture date (2024-04-26) so stale data from other dates doesn't affect assertions.
 
 | Test                       | Description                                                |
 | -------------------------- | ---------------------------------------------------------- |
@@ -147,9 +147,10 @@ make up-ci           # Start the full stack using published images
 make down            # Stop and remove all containers
 make clean           # Stop, remove containers, volumes, and orphans
 make build           # Build all service images
-make test-e2e        # Start stack (from source) + run E2E tests
-make test-e2e-ci     # Start stack (published images) + run E2E tests
+make test-e2e        # Start stack (from source) + reset DB + run E2E tests
+make test-e2e-ci     # Start stack (published images) + reset DB + run E2E tests
 make test-e2e-only   # Run E2E tests against an already-running stack
+make reset-db        # Truncate storm_reports and restart collector
 make ps              # Show running services
 make logs            # Tail logs from all services
 make logs-collector  # Tail collector logs

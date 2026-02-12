@@ -24,7 +24,7 @@ For service-specific development guides:
 
 ```
 ~/Projects/hailtrace/
-  storm-data-collector/       # TypeScript, KafkaJS, Vitest
+  storm-data-collector/       # TypeScript, Confluent Kafka JS, Vitest
   storm-data-etl/             # Go, hexagonal architecture, kafka-go
   storm-data-api/             # Go, gqlgen, pgx, chi
   storm-data-shared/          # Go, shared library (config, observability, retry)
@@ -63,7 +63,8 @@ Use this repo to bring up everything together:
 ```sh
 cd storm-data-system
 make up          # Build all images from source, start stack
-make test-e2e    # Start stack + run E2E tests
+make test-e2e    # Start stack + reset DB + run E2E tests
+make reset-db    # Truncate storm_reports and restart collector
 make down        # Tear down
 ```
 

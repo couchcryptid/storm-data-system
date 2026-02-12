@@ -14,7 +14,10 @@ const (
 	msgAggregationsNil = "aggregations is nil"
 )
 
-const wideTimeRange = `timeRange: { from: "2020-01-01T00:00:00Z", to: "2030-01-01T00:00:00Z" }`
+// fixtureTimeRange matches the mock server's fixture date (240426 → 2024-04-26).
+// Using the exact fixture date instead of a wide 2020–2030 window makes tests
+// resilient to stale data from other dates that may exist in the database.
+const fixtureTimeRange = `timeRange: { from: "2024-04-26T00:00:00Z", to: "2024-04-27T00:00:00Z" }`
 
 func TestServicesHealthy(t *testing.T) {
 	waitForHealthy(t, "api", apiURL())
@@ -30,7 +33,7 @@ func TestReportCounts(t *testing.T) {
 	ensureDataPropagated(t)
 
 	query := `{
-		stormReports(filter: { ` + wideTimeRange + ` }) {
+		stormReports(filter: { ` + fixtureTimeRange + ` }) {
 			totalCount
 			aggregations {
 				byEventType { eventType count maxMeasurement { magnitude unit } }
@@ -68,7 +71,7 @@ func TestStateAggregations(t *testing.T) {
 	ensureDataPropagated(t)
 
 	query := `{
-		stormReports(filter: { ` + wideTimeRange + ` }) {
+		stormReports(filter: { ` + fixtureTimeRange + ` }) {
 			aggregations {
 				byState {
 					state count
@@ -112,7 +115,7 @@ func TestReportEnrichment(t *testing.T) {
 	ensureDataPropagated(t)
 
 	query := `{
-		stormReports(filter: { ` + wideTimeRange + ` }) {
+		stormReports(filter: { ` + fixtureTimeRange + ` }) {
 			reports {
 				id eventType
 				measurement { magnitude unit severity }
@@ -140,7 +143,7 @@ func TestSpotCheckHailReport(t *testing.T) {
 
 	query := `{
 		stormReports(filter: {
-			` + wideTimeRange + `
+			` + fixtureTimeRange + `
 			eventTypes: [HAIL]
 			counties: ["San Saba"]
 		}) {
@@ -201,7 +204,7 @@ func TestHourlyAggregation(t *testing.T) {
 	ensureDataPropagated(t)
 
 	query := `{
-		stormReports(filter: { ` + wideTimeRange + ` }) {
+		stormReports(filter: { ` + fixtureTimeRange + ` }) {
 			totalCount
 			aggregations {
 				byHour { bucket count }
@@ -238,7 +241,7 @@ func TestEventTypeFilter(t *testing.T) {
 
 	query := `{
 		stormReports(filter: {
-			` + wideTimeRange + `
+			` + fixtureTimeRange + `
 			eventTypes: [TORNADO]
 		}) {
 			totalCount
@@ -263,7 +266,7 @@ func TestMeta(t *testing.T) {
 	ensureDataPropagated(t)
 
 	query := `{
-		stormReports(filter: { ` + wideTimeRange + ` }) {
+		stormReports(filter: { ` + fixtureTimeRange + ` }) {
 			meta {
 				lastUpdated
 				dataLagMinutes
@@ -291,7 +294,7 @@ func TestPagination(t *testing.T) {
 	// First page: limit 5, offset 0
 	page1Query := `{
 		stormReports(filter: {
-			` + wideTimeRange + `
+			` + fixtureTimeRange + `
 			limit: 5
 			offset: 0
 		}) {
@@ -316,7 +319,7 @@ func TestPagination(t *testing.T) {
 	// Second page: limit 5, offset 5
 	page2Query := `{
 		stormReports(filter: {
-			` + wideTimeRange + `
+			` + fixtureTimeRange + `
 			limit: 5
 			offset: 5
 		}) {
@@ -349,7 +352,7 @@ func TestSeverityFilter(t *testing.T) {
 
 	query := `{
 		stormReports(filter: {
-			` + wideTimeRange + `
+			` + fixtureTimeRange + `
 			severity: [SEVERE]
 		}) {
 			totalCount
@@ -382,7 +385,7 @@ func TestSortByMagnitude(t *testing.T) {
 
 	query := `{
 		stormReports(filter: {
-			` + wideTimeRange + `
+			` + fixtureTimeRange + `
 			eventTypes: [HAIL]
 			sortBy: MAGNITUDE
 			sortOrder: DESC
@@ -415,7 +418,7 @@ func TestGeoRadiusFilter(t *testing.T) {
 	// A 50-mile radius should return some but not all NE reports.
 	query := `{
 		stormReports(filter: {
-			` + wideTimeRange + `
+			` + fixtureTimeRange + `
 			near: { lat: 41.0, lon: -99.0, radiusMiles: 50 }
 		}) {
 			totalCount

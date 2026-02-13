@@ -56,7 +56,7 @@ The collector fetches NOAA CSVs on a schedule (daily by default) rather than str
 
 ### Hexagonal architecture in ETL
 
-The ETL service defines `Extractor`, `Transformer`, and `Loader` interfaces. Kafka adapters implement these interfaces, and the pipeline orchestrates them.
+The ETL service defines `BatchExtractor`, `Transformer`, and `BatchLoader` interfaces. Kafka adapters implement these interfaces, and the pipeline orchestrates them.
 
 **Why**: Domain logic (parsing, enrichment, severity classification) is completely isolated from infrastructure. Tests can substitute in-memory implementations. The Kafka consumer could be swapped for a file reader or HTTP endpoint without touching business logic.
 

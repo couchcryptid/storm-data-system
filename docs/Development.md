@@ -78,7 +78,7 @@ The [storm-data-shared](https://github.com/couchcryptid/storm-data-shared) Go mo
 |---------|-----------------|---------|
 | `config` | `EnvOrDefault`, `ParseBrokers`, `ParseBatchSize`, `ParseBatchFlushInterval`, `ParseShutdownTimeout` | ETL, API |
 | `observability` | `NewLogger` (slog), `LivenessHandler`, `ReadinessHandler`, `ReadinessChecker` interface | ETL, API |
-| `retry` | `NextBackoff`, `SleepWithContext` | ETL |
+| `retry` | `NextBackoff`, `SleepWithContext` | ETL, API |
 
 Each service wraps shared functions in thin service-specific adapters. For example, the ETL's `observability.NewLogger(cfg)` calls `sharedobs.NewLogger(cfg.LogLevel, cfg.LogFormat)`, keeping the shared library free of service-specific types.
 
@@ -162,6 +162,7 @@ All services have the same CI structure in `.github/workflows/ci.yml`:
 | Unit tests | `npm run test:unit` | `make test-unit` | `make test-unit` |
 | Lint | `npm run lint` + `typecheck` | `make lint` | `make lint` |
 | Build | `npm run build` | `make build` | `make build` |
+| SonarCloud | Unit tests with coverage + SonarCloud scan | Unit tests with coverage + SonarCloud scan | Unit tests with coverage + SonarCloud scan |
 
 A separate `release.yml` workflow handles versioning, GitHub releases, and Docker image publishing.
 

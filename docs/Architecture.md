@@ -8,6 +8,56 @@ System design, tradeoffs, and improvement roadmap for the storm data pipeline.
 
 Three services, two Kafka topics, one database. Data flows left to right through a collector → ETL → API pipeline. Clients query the GraphQL API on the far right.
 
+## Deployment Topology
+
+The system runs on a local Kubernetes cluster (minikube) with resources spread across two namespaces.
+
+### Namespaces
+
+**`kafka`** -- Strimzi operator and all Kafka-related custom resources (Kafka cluster, KafkaNodePool, KafkaTopic). Strimzi requires its operator and managed resources in the same namespace for RBAC scoping.
+
+**`hailtrace`** -- All application workloads (collector, ETL, API, mock server, dashboard), PostgreSQL, Prometheus, and Kafka UI. Services reference the Kafka broker via its cross-namespace DNS name: `kafka-kafka-bootstrap.kafka.svc.cluster.local:9092`.
+
+### Kubernetes Resources
+
+| Resource | Kind | Namespace | Description |
+|----------|------|-----------|-------------|
+| `kafka` | Kafka (Strimzi CR) | kafka | Single-node KRaft-mode Kafka 4.1.1 cluster |
+| `broker` | KafkaNodePool (Strimzi CR) | kafka | Broker pool: 1 replica, broker+controller roles, 1Gi PVC |
+| `raw-weather-reports` | KafkaTopic (Strimzi CR) | kafka | 1 partition, 1 replica |
+| `transformed-weather-data` | KafkaTopic (Strimzi CR) | kafka | 1 partition, 1 replica |
+| `postgres` | StatefulSet | hailtrace | PostgreSQL 16, 1 replica, 1Gi PVC, headless Service |
+| `postgres-credentials` | Secret | hailtrace | POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB |
+| `collector` | Deployment | hailtrace | 1 replica, ConfigMap for Kafka/URL config |
+| `etl` | Deployment | hailtrace | 1 replica, ConfigMap for Kafka topics and batch config |
+| `api` | Deployment | hailtrace | 1 replica, ConfigMap + Secret (DATABASE_URL) |
+| `mock-server` | Deployment | hailtrace | 1 replica, local image (imagePullPolicy: Never) |
+| `dashboard` | Deployment | hailtrace | nginx serving HTML from ConfigMap volume |
+| `prometheus` | Deployment | hailtrace | Scrapes collector, ETL, and API /metrics endpoints |
+| `kafka-ui` | Deployment | hailtrace | Web UI for topic inspection |
+
+Each Deployment has a corresponding ClusterIP Service for in-cluster DNS resolution. PostgreSQL uses a headless Service (`clusterIP: None`) for stable pod DNS (`postgres-0.postgres.hailtrace.svc`).
+
+### Strimzi Operator Pattern
+
+Kafka is managed by the [Strimzi operator](https://strimzi.io/) rather than raw StatefulSets. The operator watches for `Kafka`, `KafkaNodePool`, and `KafkaTopic` custom resources and reconciles the actual Kafka broker pods, storage, and topic configuration.
+
+This replaces the `kafka-init` container from the Docker Compose setup. Previously, an init container ran `kafka-topics.sh --create` on startup to ensure topics existed. Now, topics are declared as `KafkaTopic` CRs in `k8s/base/kafka/`, and Strimzi's entity operator creates and manages them. Adding a topic means adding a YAML file, not modifying a startup script.
+
+The Strimzi-managed Kafka runs in KRaft mode (no ZooKeeper) with a single combined broker/controller node. The bootstrap service is exposed at `kafka-kafka-bootstrap.kafka.svc.cluster.local:9092` -- the naming convention is `{cluster-name}-kafka-bootstrap`.
+
+### Kustomize Base/Overlay Structure
+
+Manifests are organized using [Kustomize](https://kustomize.io/), which is built into kubectl:
+
+- **`k8s/base/`** -- Canonical resource definitions for all hailtrace-namespace workloads. The base `kustomization.yaml` assembles Postgres, application services, monitoring, dashboard, and Kafka UI. Kafka resources (in `k8s/base/kafka/`) are applied separately to the kafka namespace via the Makefile.
+
+- **`k8s/overlays/dev/`** -- Development overlay. Patches the mock-server Deployment to use a locally-built image with `imagePullPolicy: Never`, loaded into minikube's Docker daemon via `eval $(minikube docker-env)`.
+
+- **`k8s/overlays/ci/`** -- CI overlay. Pins the three application service images (collector, ETL, API) to their published Docker Hub tags. This is the Kustomize equivalent of the former `compose.ci.yml` override.
+
+The base/overlay split replaces Docker Compose's file override pattern (`docker compose -f compose.yml -f compose.ci.yml`). Environment-specific changes are expressed as Kustomize patches rather than Compose file merges.
+
 ## Design Tradeoffs
 
 ### Multi-repo over monorepo

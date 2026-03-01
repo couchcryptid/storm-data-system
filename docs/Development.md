@@ -1,6 +1,6 @@
 # Development
 
-Multi-repo development workflow for the storm data pipeline. Each service is an independent repository with its own toolchain, tests, and CI. This repo provides the unified stack for E2E testing and system-level validation.
+Multi-repo development workflow for the storm data pipeline. Each service is an independent repository with its own toolchain, tests, and CI. This repo provides the unified Kubernetes stack for E2E testing and system-level validation.
 
 For service-specific development guides:
 
@@ -15,8 +15,9 @@ For service-specific development guides:
 |------|---------|---------|
 | Go | 1.25+ | ETL, API, E2E tests, mock server |
 | Node.js | 24+ (LTS) | Collector |
-| Docker | Latest | All services, infrastructure |
-| Docker Compose | v2+ | Stack orchestration |
+| Docker | Latest | Building images, minikube driver |
+| minikube | Latest | Local Kubernetes cluster |
+| kubectl | Latest | Cluster management, deployments |
 | golangci-lint | Latest | ETL, API linting |
 | pre-commit | Latest | Git hooks (optional) |
 
@@ -28,10 +29,10 @@ For service-specific development guides:
   storm-data-etl/             # Go, hexagonal architecture, kafka-go
   storm-data-api/             # Go, gqlgen, pgx, chi
   storm-data-shared/          # Go, shared library (config, observability, retry)
-  storm-data-system/          # Unified stack, E2E tests, docs
+  storm-data-system/          # Unified K8s stack, E2E tests, docs
 ```
 
-All five repos should be cloned as siblings under the same parent directory. The unified `compose.yml` references sibling repos via relative paths (`../storm-data-collector`, etc.). The shared library is consumed as a Go module dependency, not via relative paths.
+All five repos should be cloned as siblings under the same parent directory. The mock server is built locally and loaded into minikube's Docker daemon. The shared library is consumed as a Go module dependency, not via relative paths.
 
 ## Working on a Single Service
 
@@ -54,21 +55,106 @@ make docker-up
 make run
 ```
 
-Each service's Compose starts only the infrastructure it needs (Kafka for collector/ETL, Kafka + PostgreSQL for API).
+Each service's Compose starts only the infrastructure it needs (Kafka for collector/ETL, Kafka + PostgreSQL for API). This remains the fastest path for iterating on a single service without running the full cluster.
 
 ## Working on the Full Stack
 
-Use this repo to bring up everything together:
+Use this repo to bring up the complete pipeline in minikube:
 
 ```sh
 cd storm-data-system
-make up          # Build all images from source, start stack
-make test-e2e    # Start stack + reset DB + run E2E tests
-make reset-db    # Truncate storm_reports and restart collector
-make down        # Tear down
+make up              # Full stack from nothing (cluster + infra + apps)
+make status          # Check pod readiness across both namespaces
+make port-forward    # Forward all services to localhost (run in separate terminal)
+```
+
+Once port-forward is running, the dashboard, GraphQL API, Prometheus, and Kafka UI are accessible at their usual localhost URLs (see README).
+
+Common operations:
+
+```sh
+make apply-apps      # Re-deploy application services (dev overlay)
+make apply-apps-ci   # Re-deploy using published images (CI overlay)
+make reset-db        # Truncate storm_reports and restart collector
+make test-e2e        # Reset DB + run E2E tests
+make test-e2e-only   # Run tests against running stack (requires port-forward)
+make down            # Delete workloads but keep cluster
+make clean           # Delete workloads + PVCs
+make stop            # Stop minikube (preserves state for later)
+make destroy         # Delete minikube cluster entirely
 ```
 
 See the Makefile for the complete command reference.
+
+## Building Local Images
+
+The mock server is built locally and loaded into minikube's Docker daemon:
+
+```sh
+make build-local
+```
+
+This runs `docker build` inside minikube's Docker environment (via `eval $(minikube docker-env)`), making the image available to the cluster without a registry push. The mock-server Deployment uses `imagePullPolicy: Never` to reference this local image.
+
+Application service images (collector, ETL, API) are pulled from Docker Hub by default. To test local changes to a service image:
+
+```sh
+# Build inside minikube's Docker daemon
+eval $(minikube docker-env)
+docker build -t brendanvinson/storm-data-api:latest ../storm-data-api
+
+# Restart the deployment to pick up the new image
+kubectl rollout restart deployment/api -n hailtrace
+```
+
+## Useful kubectl Commands
+
+### Pod status and logs
+
+```sh
+kubectl get pods -n hailtrace              # App pods
+kubectl get pods -n kafka                  # Kafka pods (Strimzi-managed)
+kubectl get pods -A                        # All pods across namespaces
+
+kubectl logs -f deployment/collector -n hailtrace   # Follow collector logs
+kubectl logs -f deployment/etl -n hailtrace         # Follow ETL logs
+kubectl logs -f deployment/api -n hailtrace         # Follow API logs
+kubectl logs -f -l app -n hailtrace --max-log-requests=10  # All app logs
+```
+
+### Debugging
+
+```sh
+kubectl describe pod <pod-name> -n hailtrace   # Events, conditions, mounts
+kubectl describe kafka/kafka -n kafka          # Strimzi Kafka cluster status
+
+kubectl exec -it -n hailtrace postgres-0 -- psql -U storm -d stormdata
+kubectl exec -it -n hailtrace deployment/api -- sh
+```
+
+### Port forwarding (individual services)
+
+```sh
+kubectl port-forward -n hailtrace deployment/api 8080:8080
+kubectl port-forward -n hailtrace deployment/dashboard 8000:80
+kubectl port-forward -n hailtrace deployment/prometheus 9090:9090
+```
+
+### Rolling restarts
+
+```sh
+kubectl rollout restart deployment/collector -n hailtrace
+kubectl rollout restart deployment/etl -n hailtrace
+kubectl rollout restart deployment/api -n hailtrace
+```
+
+### Strimzi resources
+
+```sh
+kubectl get kafka -n kafka                 # Kafka cluster status
+kubectl get kafkatopic -n kafka            # Topic list
+kubectl get kafkanodepool -n kafka         # Broker pool status
+```
 
 ## Shared Library
 
@@ -97,6 +183,8 @@ All three services expose the same operational endpoints:
 | `GET /healthz` | `{"status": "healthy"}` | -- | Liveness probe |
 | `GET /readyz` | `{"status": "ready"}` | `{"status": "not ready"}` | Readiness probe |
 | `GET /metrics` | Prometheus exposition format | -- | Metrics scraping |
+
+These map directly to Kubernetes liveness and readiness probes in each Deployment manifest.
 
 ### Readiness Semantics
 
@@ -132,6 +220,8 @@ All three services expose the same operational endpoints:
 | Validation | Zod schema | `config.Load() (*Config, error)` | `config.Load() (*Config, error)` |
 | Failure mode | Exit with Zod error | Exit with error message | Exit with error message |
 
+In Kubernetes, non-sensitive configuration lives in ConfigMaps and sensitive values (database URLs, credentials) in Secrets. Pods load both via `envFrom`.
+
 ### Graceful Shutdown
 
 All services follow the same shutdown pattern:
@@ -141,6 +231,8 @@ All services follow the same shutdown pattern:
 3. Drain in-flight operations within `SHUTDOWN_TIMEOUT`
 4. Close infrastructure connections (Kafka, database)
 5. Log "shutdown complete"
+
+Kubernetes sends `SIGTERM` on pod termination, giving the `terminationGracePeriodSeconds` (default 30s) for shutdown to complete.
 
 ### Linting and Pre-commit
 

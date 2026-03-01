@@ -1,6 +1,6 @@
 # Storm Data System
 
-System-level orchestration, end-to-end tests, and documentation for the storm data pipeline. Brings together the collector, ETL, and GraphQL API services into a single Docker Compose stack with a mock NOAA server for testing.
+System-level orchestration, end-to-end tests, and documentation for the storm data pipeline. Brings together the collector, ETL, and GraphQL API services into a Kubernetes stack (minikube) with a mock NOAA server for testing.
 
 ## How It Works
 
@@ -29,15 +29,23 @@ The stack also includes a **dashboard** (interactive Leaflet map with filters an
 
 ### Prerequisites
 
-- Docker and Docker Compose
+- [minikube](https://minikube.sigs.k8s.io/docs/start/) (4GB memory, 2 CPUs)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- Docker (for building local images)
 
 ### Run the full stack
 
 ```sh
-make up-ci
+make up
 ```
 
-This pulls published service images from Docker Hub and starts the full stack. The collector runs its job once on startup, fetching CSVs from the mock server. Once healthy (~30-60 seconds):
+This starts a minikube cluster, installs the Strimzi Kafka operator, builds local images, deploys infrastructure (Kafka + Postgres), and applies application manifests. The collector runs its job once on startup, fetching CSVs from the mock server. Once healthy (~60-90 seconds):
+
+```sh
+make port-forward
+```
+
+This forwards all services to localhost. In a separate terminal:
 
 | Tool | URL | Description |
 |------|-----|-------------|
@@ -48,31 +56,35 @@ This pulls published service images from Docker Hub and starts the full stack. T
 
 ### Run E2E tests
 
+E2E tests require `make port-forward` running in a separate terminal.
+
 ```sh
-make test-e2e-ci     # Starts stack (published images) + runs tests
-make test-e2e-only   # Runs tests against an already-running stack
+make test-e2e          # Reset DB + run tests
+make test-e2e-only     # Run tests against an already-running stack
 ```
 
 ### Tear down
 
 ```sh
-make down            # Stop containers
-make clean           # Stop containers + remove volumes
+make down              # Delete workloads but keep cluster
+make clean             # Delete workloads + PVCs
+make stop              # Stop minikube (preserves state)
+make destroy           # Delete minikube cluster entirely
 ```
 
 ## Services
 
-| Service        | Image                                          | Host Port | Internal Port | Health Check |
-| -------------- | ---------------------------------------------- | --------- | ------------- | ------------ |
-| `kafka`        | `apache/kafka:3.7.0`                           | 29092     | 9092          | Topic list   |
-| `postgres`     | `postgres:16`                                  | 5432      | 5432          | `pg_isready` |
-| `mock-server`  | `./mock-server`                                | 8090      | 8080          | `/healthz`   |
-| `collector`    | `brendanvinson/storm-data-collector:latest`    | 3000      | 3000          | `/healthz`   |
-| `etl`          | `brendanvinson/storm-data-etl:latest`          | 8081      | 8080          | `/healthz`   |
-| `api`          | `brendanvinson/storm-data-api:latest`          | 8080      | 8080          | `/healthz`   |
-| `dashboard`    | `nginx:1-alpine`                               | 8000      | 80            | HTTP GET `/` |
-| `prometheus`   | `prom/prometheus:v3.2.1`                       | 9090      | 9090          | `promtool check healthy` |
-| `kafka-ui`     | `provectuslabs/kafka-ui:latest`                | 8082      | 8080          | `/actuator/health` |
+| Service        | K8s Resource   | Image                                          | Container Port | Health Check |
+| -------------- | -------------- | ---------------------------------------------- | -------------- | ------------ |
+| `kafka`        | Strimzi Kafka  | Strimzi-managed (Kafka 4.1.1)                  | 9092           | Strimzi readiness |
+| `postgres`     | StatefulSet    | `postgres:16`                                  | 5432           | `pg_isready` |
+| `mock-server`  | Deployment     | `storm-data-mock-server:latest` (local build)  | 8080           | `/healthz`   |
+| `collector`    | Deployment     | `brendanvinson/storm-data-collector:latest`     | 3000           | `/healthz`   |
+| `etl`          | Deployment     | `brendanvinson/storm-data-etl:latest`           | 8080           | `/healthz`   |
+| `api`          | Deployment     | `brendanvinson/storm-data-api:latest`           | 8080           | `/healthz`   |
+| `dashboard`    | Deployment     | `nginx:1-alpine`                               | 80             | HTTP GET `/` |
+| `prometheus`   | Deployment     | `prom/prometheus:v3.2.1`                        | 9090           | `/-/healthy` |
+| `kafka-ui`     | Deployment     | `provectuslabs/kafka-ui:latest`                 | 8080           | `/actuator/health` |
 
 ## Kafka Topics
 
@@ -81,11 +93,13 @@ make clean           # Stop containers + remove volumes
 | `raw-weather-reports`       | Collector   | ETL      | Flat CSV JSON with capitalized keys  |
 | `transformed-weather-data`  | ETL         | API      | Enriched storm events with severity, location, time bucketing |
 
+Topics are managed as Strimzi `KafkaTopic` custom resources in `k8s/base/kafka/`.
+
 ## Mock Server
 
 A lightweight Go HTTP server that mimics the NOAA Storm Prediction Center CSV endpoint. It matches request URLs by suffix (`_rpts_hail.csv`, `_rpts_torn.csv`, `_rpts_wind.csv`) and serves the corresponding fixture from `mock-server/data/`.
 
-The collector's `REPORTS_BASE_URL` is configured to point to the mock server. CSV fixtures are named using the NOAA format: `{YYMMDD}_rpts_{type}.csv`.
+The collector's `REPORTS_BASE_URL` is configured via ConfigMap to point to the mock server's ClusterIP Service. CSV fixtures are named using the NOAA format: `{YYMMDD}_rpts_{type}.csv`.
 
 ### Test Fixtures
 
@@ -139,33 +153,138 @@ storm-data-shared/          <-- shared Go library (config, observability, retry)
 storm-data-system/          <-- this repo
 ```
 
-Then use `make up` to build from source:
+### Makefile Targets
 
 ```
-make up              # Start the full stack (builds from local source)
-make up-ci           # Start the full stack using published images
-make down            # Stop and remove all containers
-make clean           # Stop, remove containers, volumes, and orphans
-make build           # Build all service images
-make test-e2e        # Start stack (from source) + reset DB + run E2E tests
-make test-e2e-ci     # Start stack (published images) + reset DB + run E2E tests
-make test-e2e-only   # Run E2E tests against an already-running stack
-make reset-db        # Truncate storm_reports and restart collector
-make ps              # Show running services
-make logs            # Tail logs from all services
-make logs-collector  # Tail collector logs
-make logs-etl        # Tail ETL logs
-make logs-api        # Tail API logs
-make help            # Show all available targets
+make start               # Start minikube cluster
+make stop                # Stop minikube (preserves state)
+make destroy             # Delete minikube cluster entirely
+make install-strimzi     # Install Strimzi Kafka operator
+make apply-infra         # Deploy Kafka + Postgres
+make build-local         # Build and load local images into minikube
+make apply-apps          # Deploy application services (dev overlay)
+make apply-apps-ci       # Deploy application services (CI overlay)
+make up                  # Full stack from nothing (start + infra + apps)
+make down                # Delete workloads but keep cluster
+make clean               # Delete workloads + PVCs
+make reset-db            # Truncate storm_reports and restart collector
+make test-e2e            # Reset DB + run E2E tests
+make test-e2e-only       # Run E2E tests against running stack
+make status              # Show all pods across namespaces
+make logs                # Tail all app service logs
+make logs-collector      # Tail collector logs
+make logs-etl            # Tail ETL logs
+make logs-api            # Tail API logs
+make port-forward        # Forward all services to localhost
+make help                # Show all available targets
 ```
+
+## K8s Manifest Structure
+
+```
+k8s/
+  base/
+    kustomization.yaml          Kustomize base -- assembles all hailtrace-namespace resources
+    namespace.yaml              Namespace definition (hailtrace)
+
+    kafka/
+      kafka-cluster.yaml        Strimzi Kafka + KafkaNodePool CRs (deployed to kafka namespace)
+      topic-raw.yaml            KafkaTopic: raw-weather-reports
+      topic-transformed.yaml    KafkaTopic: transformed-weather-data
+
+    postgres/
+      statefulset.yaml          StatefulSet with 1Gi PVC
+      service.yaml              Headless Service (clusterIP: None)
+      secret.yaml               Credentials (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
+
+    collector/
+      deployment.yaml           Deployment (1 replica)
+      service.yaml              ClusterIP Service
+      configmap.yaml            Kafka brokers, topic, base URL, cron schedule
+
+    etl/
+      deployment.yaml           Deployment (1 replica)
+      service.yaml              ClusterIP Service
+      configmap.yaml            Kafka brokers, source/sink topics, batch config
+
+    api/
+      deployment.yaml           Deployment (1 replica)
+      service.yaml              ClusterIP Service
+      configmap.yaml            Kafka brokers, topic, batch config
+      secret.yaml               DATABASE_URL connection string
+
+    mock-server/
+      deployment.yaml           Deployment (imagePullPolicy: Never for local image)
+      service.yaml              ClusterIP Service
+
+    monitoring/
+      deployment.yaml           Prometheus Deployment
+      service.yaml              ClusterIP Service
+      prometheus-config.yaml    ConfigMap with scrape config
+
+    dashboard/
+      deployment.yaml           nginx Deployment with ConfigMap volume mount
+      service.yaml              ClusterIP Service
+      configmap.yaml            Dashboard HTML served via ConfigMap
+
+    kafka-ui/
+      deployment.yaml           Kafka UI Deployment
+      service.yaml              ClusterIP Service
+      configmap.yaml            Bootstrap server config
+
+  overlays/
+    dev/
+      kustomization.yaml        Dev overlay -- patches mock-server for local image
+    ci/
+      kustomization.yaml        CI overlay -- pins published image tags
+```
+
+## Design Decisions
+
+### Strimzi for Kafka
+
+Kafka is managed by the [Strimzi operator](https://strimzi.io/) rather than a raw StatefulSet. Strimzi provides `Kafka`, `KafkaNodePool`, and `KafkaTopic` custom resources that handle broker lifecycle, storage, and topic management declaratively. This replaces the `kafka-init` container from the Docker Compose setup -- topics are now Kubernetes resources that the Strimzi entity operator reconciles automatically.
+
+**Why**: Strimzi handles the operational complexity of Kafka on Kubernetes (storage provisioning, rolling updates, listener configuration) through its operator pattern. Topic creation is declarative rather than imperative, eliminating the need for init containers or startup scripts.
+
+### Raw StatefulSet for Postgres
+
+PostgreSQL uses a vanilla StatefulSet with a PersistentVolumeClaim rather than an operator (e.g., CloudNativePG, Zalando).
+
+**Why**: The database has a single replica with no replication, failover, or backup requirements in development. A StatefulSet with a PVC provides stable storage identity without the complexity of a full database operator. The headless Service (`clusterIP: None`) gives the pod a stable DNS name (`postgres-0.postgres.hailtrace.svc`).
+
+### Kustomize overlays
+
+The `k8s/base/` directory contains the canonical resource definitions. Overlays customize for environment:
+
+- **dev**: Patches the mock-server to use a locally-built image (`imagePullPolicy: Never`) loaded into minikube's Docker daemon via `eval $(minikube docker-env)`.
+- **ci**: Pins published Docker Hub image tags for the three application services.
+
+**Why**: Kustomize is built into kubectl (no additional tooling). Overlays replace the `compose.ci.yml` override pattern from Docker Compose, providing the same "base + environment patches" model natively in Kubernetes.
+
+### Namespace separation
+
+Infrastructure and application resources are deployed to two namespaces:
+
+- **`kafka`** -- Strimzi operator, Kafka broker, KafkaNodePool, and KafkaTopic resources. Strimzi requires its operator and managed resources in the same namespace.
+- **`hailtrace`** -- Everything else: Postgres, application services, monitoring, dashboard. All application ConfigMaps reference Kafka via its cross-namespace DNS name (`kafka-kafka-bootstrap.kafka.svc.cluster.local:9092`).
+
+**Why**: Separating Kafka into its own namespace isolates operator RBAC permissions and CRD lifecycle from application resources. The `hailtrace` namespace owns the application boundary. This mirrors a production pattern where shared infrastructure (message brokers, service meshes) lives in dedicated namespaces.
+
+### Credentials in Secrets
+
+Database credentials and connection strings are stored in Kubernetes Secrets (`postgres-credentials`, `api-credentials`) rather than ConfigMaps. Non-sensitive configuration (Kafka brokers, topic names, log levels) lives in ConfigMaps.
+
+**Why**: Kubernetes Secrets provide the standard separation between sensitive and non-sensitive configuration. Pods reference Secrets via `envFrom.secretRef`, keeping credential management consistent with production patterns where Secrets would be backed by an external secrets store (Vault, AWS Secrets Manager, etc.).
 
 ## CI
 
-The `compose.ci.yml` override replaces local `build:` directives with `image:` references to published Docker Hub images (`brendanvinson/storm-data-*:latest`). Quick Start uses this by default via `make up-ci`. CI pipelines run E2E tests against these same images:
+The CI overlay (`k8s/overlays/ci/`) replaces the dev overlay's local image patches with published Docker Hub image references (`brendanvinson/storm-data-*:latest`). This is the Kustomize equivalent of the former `compose.ci.yml` override.
 
 ```sh
-make up-ci
-cd e2e && go test -v -count=1 -timeout 5m ./...
+make up                  # or: start + install-strimzi + apply-infra + apply-apps-ci
+make port-forward        # in a separate terminal
+make test-e2e-only
 make down
 ```
 
@@ -179,10 +298,8 @@ See the [project wiki](../../wiki) for detailed documentation:
 ## Project Structure
 
 ```
-compose.yml             Unified Docker Compose stack (local dev, builds from source)
-compose.ci.yml          CI override (published images from Docker Hub)
-Makefile                Convenience targets for stack management and testing
-.env.*                  Service and infrastructure environment files
+k8s/                    Kubernetes manifests (Kustomize base + overlays)
+Makefile                Convenience targets for cluster and stack management
 
 mock-server/
   main.go               Go HTTP server mimicking NOAA CSV endpoints

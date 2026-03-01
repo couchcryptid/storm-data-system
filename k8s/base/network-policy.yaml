@@ -1,0 +1,99 @@
+# k8s/base/network-policy.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: hailtrace
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-postgres
+  namespace: hailtrace
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mock-server
+  namespace: hailtrace
+spec:
+  podSelector:
+    matchLabels:
+      app: mock-server
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: collector
+      ports:
+        - port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-metrics
+  namespace: hailtrace
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  ingress:
+    - from: []
+      ports:
+        - port: 9090
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-scrape-targets
+  namespace: hailtrace
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [collector, etl, api]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 3000
+        - port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress
+  namespace: hailtrace
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [dashboard, api, prometheus, kafka-ui]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 80
+        - port: 8080
+        - port: 9090

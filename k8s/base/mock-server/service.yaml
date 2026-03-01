@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-server
+  namespace: hailtrace
+spec:
+  selector:
+    app: mock-server
+  ports:
+    - port: 8080
+      targetPort: 8080

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: collector
+  namespace: hailtrace
+spec:
+  selector:
+    app: collector
+  ports:
+    - port: 3000
+      targetPort: 3000

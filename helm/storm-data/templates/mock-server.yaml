@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-server
+  labels:
+    {{- include "storm-data.componentLabels" (dict "ctx" $ "component" "mock-server") | nindent 4 }}
+spec:
+  selector:
+    {{- include "storm-data.selectorLabels" (dict "component" "mock-server") | nindent 4 }}
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-server
+  labels:
+    {{- include "storm-data.componentLabels" (dict "ctx" $ "component" "mock-server") | nindent 4 }}
+spec:
+  replicas: {{ .Values.mockServer.replicas }}
+  selector:
+    matchLabels:
+      {{- include "storm-data.selectorLabels" (dict "component" "mock-server") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "storm-data.selectorLabels" (dict "component" "mock-server") | nindent 8 }}
+    spec:
+      containers:
+        - name: mock-server
+          image: "{{ .Values.mockServer.image.repository }}:{{ .Values.mockServer.image.tag }}"
+          imagePullPolicy: {{ .Values.mockServer.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.mockServer.resources | nindent 12 }}

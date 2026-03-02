@@ -1,0 +1,22 @@
+# CI overlay — published Docker Hub images for application services.
+# Mock server still uses a local build (imagePullPolicy: Never).
+#
+# Usage: helm install storm-data helm/storm-data/ -f helm/storm-data/values-ci.yaml -n storm-data
+
+collector:
+  image:
+    repository: brendanvinson/storm-data-collector
+    tag: latest
+    pullPolicy: Always
+
+etl:
+  image:
+    repository: brendanvinson/storm-data-etl
+    tag: latest
+    pullPolicy: Always
+
+api:
+  image:
+    repository: brendanvinson/storm-data-api
+    tag: latest
+    pullPolicy: Always

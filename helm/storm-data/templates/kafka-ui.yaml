@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-ui-config
+  labels:
+    {{- include "storm-data.componentLabels" (dict "ctx" $ "component" "kafka-ui") | nindent 4 }}
+data:
+  KAFKA_CLUSTERS_0_NAME: "storm-data"
+  KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: {{ .Values.global.kafka.brokers | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ui
+  labels:
+    {{- include "storm-data.componentLabels" (dict "ctx" $ "component" "kafka-ui") | nindent 4 }}
+spec:
+  selector:
+    {{- include "storm-data.selectorLabels" (dict "component" "kafka-ui") | nindent 4 }}
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-ui
+  labels:
+    {{- include "storm-data.componentLabels" (dict "ctx" $ "component" "kafka-ui") | nindent 4 }}
+spec:
+  replicas: {{ .Values.kafkaUi.replicas }}
+  selector:
+    matchLabels:
+      {{- include "storm-data.selectorLabels" (dict "component" "kafka-ui") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "storm-data.selectorLabels" (dict "component" "kafka-ui") | nindent 8 }}
+    spec:
+      containers:
+        - name: kafka-ui
+          image: {{ .Values.kafkaUi.image }}
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: kafka-ui-config
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10

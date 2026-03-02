@@ -1,0 +1,85 @@
+# Default values for storm-data
+# Environment-specific overrides: values-dev.yaml, values-ci.yaml
+
+# -- Global settings shared across services
+global:
+  kafka:
+    brokers: "kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
+  logLevel: "info"
+
+# -- PostgreSQL
+postgres:
+  image: postgres:16
+  resources:
+    requests:
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  storage:
+    size: 1Gi
+  credentials:
+    user: storm
+    password: storm
+    database: stormdata
+
+# -- Collector (TypeScript — NOAA CSV → Kafka)
+collector:
+  image:
+    repository: brendanvinson/storm-data-collector
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+  config:
+    clientId: "storm-data-collector"
+    topic: "raw-weather-reports"
+    reportsBaseUrl: "http://mock-server:8080/"
+    reportTypes: "torn,hail,wind"
+    cronSchedule: "0 0 * * *"
+
+# -- ETL (Go — raw events → enriched events)
+etl:
+  image:
+    repository: brendanvinson/storm-data-etl
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+  config:
+    sourceTopic: "raw-weather-reports"
+    sinkTopic: "transformed-weather-data"
+    groupId: "storm-data-etl"
+    httpAddr: ":8080"
+    logFormat: "json"
+    shutdownTimeout: "10s"
+    batchSize: "50"
+    batchFlushInterval: "500ms"
+
+# -- API (Go — enriched events → PostgreSQL + GraphQL)
+api:
+  image:
+    repository: brendanvinson/storm-data-api
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+  config:
+    topic: "transformed-weather-data"
+    groupId: "storm-data-api"
+    httpAddr: ":8080"
+    logFormat: "json"
+    shutdownTimeout: "10s"
+    batchSize: "50"
+    batchFlushInterval: "500ms"

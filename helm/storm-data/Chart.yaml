@@ -1,0 +1,6 @@
+apiVersion: v2
+name: storm-data
+description: Storm data pipeline — collector, ETL, GraphQL API, and supporting services
+version: 0.1.0
+appVersion: "1.0.0"
+type: application

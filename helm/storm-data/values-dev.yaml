@@ -1,0 +1,8 @@
+# Development overlay — local images loaded into minikube via:
+#   eval $(minikube docker-env) && docker build ...
+#
+# Usage: helm install storm-data helm/storm-data/ -f helm/storm-data/values-dev.yaml -n storm-data
+
+mockServer:
+  image:
+    pullPolicy: Never

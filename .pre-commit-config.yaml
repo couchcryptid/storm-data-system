@@ -6,7 +6,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
         args: ['--allow-multiple-documents']
-        exclude: '^compose\.ci\.yml$'
+        exclude: '^(compose\.ci\.yml|helm/.*/templates/.*)$'
       - id: check-json
       - id: check-merge-conflict
       - id: detect-private-key
@@ -16,6 +16,7 @@ repos:
     rev: v1.38.0
     hooks:
       - id: yamllint
+        exclude: '^helm/.*/templates/.*$'
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.47.0

@@ -31,6 +31,7 @@ The stack also includes a **dashboard** (interactive Leaflet map with filters an
 
 - [minikube](https://minikube.sigs.k8s.io/docs/start/) (4GB memory, 2 CPUs)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [Helm](https://helm.sh/docs/intro/install/)
 - Docker (for building local images)
 
 ### Run the full stack
@@ -39,7 +40,7 @@ The stack also includes a **dashboard** (interactive Leaflet map with filters an
 make up
 ```
 
-This starts a minikube cluster, installs the Strimzi Kafka operator, builds local images, deploys infrastructure (Kafka + Postgres), and applies application manifests. The collector runs its job once on startup, fetching CSVs from the mock server. Once healthy (~60-90 seconds):
+This starts a minikube cluster, installs the Strimzi Kafka operator, builds local images, deploys infrastructure (Kafka + Postgres), and installs the Helm chart. The collector runs its job once on startup, fetching CSVs from the mock server. Once healthy (~60-90 seconds):
 
 ```sh
 make port-forward
@@ -93,7 +94,7 @@ make destroy           # Delete minikube cluster entirely
 | `raw-weather-reports`       | Collector   | ETL      | Flat CSV JSON with capitalized keys  |
 | `transformed-weather-data`  | ETL         | API      | Enriched storm events with severity, location, time bucketing |
 
-Topics are managed as Strimzi `KafkaTopic` custom resources in `k8s/base/kafka/`.
+Topics are managed as Strimzi `KafkaTopic` custom resources in `k8s/kafka/`.
 
 ## Mock Server
 
@@ -162,8 +163,8 @@ make destroy             # Delete minikube cluster entirely
 make install-strimzi     # Install Strimzi Kafka operator
 make apply-infra         # Deploy Kafka + Postgres
 make build-local         # Build and load local images into minikube
-make apply-apps          # Deploy application services (dev overlay)
-make apply-apps-ci       # Deploy application services (CI overlay)
+make apply-apps          # Deploy application services (dev values)
+make apply-apps-ci       # Deploy application services (CI values)
 make up                  # Full stack from nothing (start + infra + apps)
 make down                # Delete workloads but keep cluster
 make clean               # Delete workloads + PVCs
@@ -182,61 +183,28 @@ make help                # Show all available targets
 ## K8s Manifest Structure
 
 ```
+helm/
+  storm-data/
+    Chart.yaml                  Helm chart metadata
+    values.yaml                 Default values (shared configuration)
+    values-dev.yaml             Dev overrides (local images, imagePullPolicy: Never)
+    values-ci.yaml              CI overrides (published Docker Hub image tags)
+    templates/
+      _helpers.tpl              Template helpers and naming conventions
+      api.yaml                  API Deployment, Service, ConfigMap, Secret
+      collector.yaml            Collector Deployment, Service, ConfigMap
+      etl.yaml                  ETL Deployment, Service, ConfigMap
+      mock-server.yaml          Mock Server Deployment, Service
+      postgres.yaml             PostgreSQL StatefulSet, Service, Secret
+      dashboard.yaml            Dashboard Deployment, Service
+      prometheus.yaml           Prometheus Deployment, Service, ConfigMap
+      kafka-ui.yaml             Kafka UI Deployment, Service, ConfigMap
+
 k8s/
-  base/
-    kustomization.yaml          Kustomize base -- assembles all hailtrace-namespace resources
-    namespace.yaml              Namespace definition (hailtrace)
-
-    kafka/
-      kafka-cluster.yaml        Strimzi Kafka + KafkaNodePool CRs (deployed to kafka namespace)
-      topic-raw.yaml            KafkaTopic: raw-weather-reports
-      topic-transformed.yaml    KafkaTopic: transformed-weather-data
-
-    postgres/
-      statefulset.yaml          StatefulSet with 1Gi PVC
-      service.yaml              Headless Service (clusterIP: None)
-      secret.yaml               Credentials (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
-
-    collector/
-      deployment.yaml           Deployment (1 replica)
-      service.yaml              ClusterIP Service
-      configmap.yaml            Kafka brokers, topic, base URL, cron schedule
-
-    etl/
-      deployment.yaml           Deployment (1 replica)
-      service.yaml              ClusterIP Service
-      configmap.yaml            Kafka brokers, source/sink topics, batch config
-
-    api/
-      deployment.yaml           Deployment (1 replica)
-      service.yaml              ClusterIP Service
-      configmap.yaml            Kafka brokers, topic, batch config
-      secret.yaml               DATABASE_URL connection string
-
-    mock-server/
-      deployment.yaml           Deployment (imagePullPolicy: Never for local image)
-      service.yaml              ClusterIP Service
-
-    monitoring/
-      deployment.yaml           Prometheus Deployment
-      service.yaml              ClusterIP Service
-      prometheus-config.yaml    ConfigMap with scrape config
-
-    dashboard/
-      deployment.yaml           nginx Deployment with ConfigMap volume mount
-      service.yaml              ClusterIP Service
-      configmap.yaml            Dashboard HTML served via ConfigMap
-
-    kafka-ui/
-      deployment.yaml           Kafka UI Deployment
-      service.yaml              ClusterIP Service
-      configmap.yaml            Bootstrap server config
-
-  overlays/
-    dev/
-      kustomization.yaml        Dev overlay -- patches mock-server for local image
-    ci/
-      kustomization.yaml        CI overlay -- pins published image tags
+  kafka/
+    kafka-cluster.yaml          Strimzi Kafka + KafkaNodePool CRs (deployed to kafka namespace)
+    topic-raw.yaml              KafkaTopic: raw-weather-reports
+    topic-transformed.yaml      KafkaTopic: transformed-weather-data
 ```
 
 ## Design Decisions
@@ -251,25 +219,28 @@ Kafka is managed by the [Strimzi operator](https://strimzi.io/) rather than a ra
 
 PostgreSQL uses a vanilla StatefulSet with a PersistentVolumeClaim rather than an operator (e.g., CloudNativePG, Zalando).
 
-**Why**: The database has a single replica with no replication, failover, or backup requirements in development. A StatefulSet with a PVC provides stable storage identity without the complexity of a full database operator. The headless Service (`clusterIP: None`) gives the pod a stable DNS name (`postgres-0.postgres.hailtrace.svc`).
+**Why**: The database has a single replica with no replication, failover, or backup requirements in development. A StatefulSet with a PVC provides stable storage identity without the complexity of a full database operator. The headless Service (`clusterIP: None`) gives the pod a stable DNS name (`postgres-0.postgres.storm-data.svc`).
 
-### Kustomize overlays
+### Helm chart
 
-The `k8s/base/` directory contains the canonical resource definitions. Overlays customize for environment:
+Application manifests are packaged as a Helm chart in `helm/storm-data/`. Environment variance is handled through values files:
 
-- **dev**: Patches the mock-server to use a locally-built image (`imagePullPolicy: Never`) loaded into minikube's Docker daemon via `eval $(minikube docker-env)`.
-- **ci**: Pins published Docker Hub image tags for the three application services.
+- **`values.yaml`** -- Default configuration shared across environments.
+- **`values-dev.yaml`** -- Dev overrides: local mock-server image with `imagePullPolicy: Never`, loaded into minikube's Docker daemon via `eval $(minikube docker-env)`.
+- **`values-ci.yaml`** -- CI overrides: pins published Docker Hub image tags for the three application services.
 
-**Why**: Kustomize is built into kubectl (no additional tooling). Overlays replace the `compose.ci.yml` override pattern from Docker Compose, providing the same "base + environment patches" model natively in Kubernetes.
+The dashboard HTML ConfigMap is created by the Makefile (`kubectl create configmap --from-file`) before the Helm install, rather than being bundled in the chart.
+
+**Why**: Helm provides templating and release management for the application manifests. Values files replace Kustomize overlays for environment-specific configuration. `helm upgrade --install` handles both initial deployment and updates, and `helm uninstall` provides clean teardown.
 
 ### Namespace separation
 
 Infrastructure and application resources are deployed to two namespaces:
 
 - **`kafka`** -- Strimzi operator, Kafka broker, KafkaNodePool, and KafkaTopic resources. Strimzi requires its operator and managed resources in the same namespace.
-- **`hailtrace`** -- Everything else: Postgres, application services, monitoring, dashboard. All application ConfigMaps reference Kafka via its cross-namespace DNS name (`kafka-kafka-bootstrap.kafka.svc.cluster.local:9092`).
+- **`storm-data`** -- Everything else: Postgres, application services, monitoring, dashboard. All application ConfigMaps reference Kafka via its cross-namespace DNS name (`kafka-kafka-bootstrap.kafka.svc.cluster.local:9092`).
 
-**Why**: Separating Kafka into its own namespace isolates operator RBAC permissions and CRD lifecycle from application resources. The `hailtrace` namespace owns the application boundary. This mirrors a production pattern where shared infrastructure (message brokers, service meshes) lives in dedicated namespaces.
+**Why**: Separating Kafka into its own namespace isolates operator RBAC permissions and CRD lifecycle from application resources. The `storm-data` namespace owns the application boundary. This mirrors a production pattern where shared infrastructure (message brokers, service meshes) lives in dedicated namespaces.
 
 ### Credentials in Secrets
 
@@ -279,7 +250,7 @@ Database credentials and connection strings are stored in Kubernetes Secrets (`p
 
 ## CI
 
-The CI overlay (`k8s/overlays/ci/`) replaces the dev overlay's local image patches with published Docker Hub image references (`brendanvinson/storm-data-*:latest`). This is the Kustomize equivalent of the former `compose.ci.yml` override.
+The CI values file (`helm/storm-data/values-ci.yaml`) replaces the dev values' local image patches with published Docker Hub image references (`brendanvinson/storm-data-*:latest`).
 
 ```sh
 make up                  # or: start + install-strimzi + apply-infra + apply-apps-ci
@@ -298,7 +269,8 @@ See the [project wiki](../../wiki) for detailed documentation:
 ## Project Structure
 
 ```
-k8s/                    Kubernetes manifests (Kustomize base + overlays)
+helm/                   Helm chart for application services
+k8s/                    Strimzi Kafka manifests (applied separately to kafka namespace)
 Makefile                Convenience targets for cluster and stack management
 
 mock-server/

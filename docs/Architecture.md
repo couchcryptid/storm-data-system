@@ -16,7 +16,7 @@ The system runs on a local Kubernetes cluster (minikube) with resources spread a
 
 **`kafka`** -- Strimzi operator and all Kafka-related custom resources (Kafka cluster, KafkaNodePool, KafkaTopic). Strimzi requires its operator and managed resources in the same namespace for RBAC scoping.
 
-**`hailtrace`** -- All application workloads (collector, ETL, API, mock server, dashboard), PostgreSQL, Prometheus, and Kafka UI. Services reference the Kafka broker via its cross-namespace DNS name: `kafka-kafka-bootstrap.kafka.svc.cluster.local:9092`.
+**`storm-data`** -- All application workloads (collector, ETL, API, mock server, dashboard), PostgreSQL, Prometheus, and Kafka UI. Services reference the Kafka broker via its cross-namespace DNS name: `kafka-kafka-bootstrap.kafka.svc.cluster.local:9092`.
 
 ### Kubernetes Resources
 
@@ -26,37 +26,37 @@ The system runs on a local Kubernetes cluster (minikube) with resources spread a
 | `broker` | KafkaNodePool (Strimzi CR) | kafka | Broker pool: 1 replica, broker+controller roles, 1Gi PVC |
 | `raw-weather-reports` | KafkaTopic (Strimzi CR) | kafka | 1 partition, 1 replica |
 | `transformed-weather-data` | KafkaTopic (Strimzi CR) | kafka | 1 partition, 1 replica |
-| `postgres` | StatefulSet | hailtrace | PostgreSQL 16, 1 replica, 1Gi PVC, headless Service |
-| `postgres-credentials` | Secret | hailtrace | POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB |
-| `collector` | Deployment | hailtrace | 1 replica, ConfigMap for Kafka/URL config |
-| `etl` | Deployment | hailtrace | 1 replica, ConfigMap for Kafka topics and batch config |
-| `api` | Deployment | hailtrace | 1 replica, ConfigMap + Secret (DATABASE_URL) |
-| `mock-server` | Deployment | hailtrace | 1 replica, local image (imagePullPolicy: Never) |
-| `dashboard` | Deployment | hailtrace | nginx serving HTML from ConfigMap volume |
-| `prometheus` | Deployment | hailtrace | Scrapes collector, ETL, and API /metrics endpoints |
-| `kafka-ui` | Deployment | hailtrace | Web UI for topic inspection |
+| `postgres` | StatefulSet | storm-data | PostgreSQL 16, 1 replica, 1Gi PVC, headless Service |
+| `postgres-credentials` | Secret | storm-data | POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB |
+| `collector` | Deployment | storm-data | 1 replica, ConfigMap for Kafka/URL config |
+| `etl` | Deployment | storm-data | 1 replica, ConfigMap for Kafka topics and batch config |
+| `api` | Deployment | storm-data | 1 replica, ConfigMap + Secret (DATABASE_URL) |
+| `mock-server` | Deployment | storm-data | 1 replica, local image (imagePullPolicy: Never) |
+| `dashboard` | Deployment | storm-data | nginx serving HTML from ConfigMap volume |
+| `prometheus` | Deployment | storm-data | Scrapes collector, ETL, and API /metrics endpoints |
+| `kafka-ui` | Deployment | storm-data | Web UI for topic inspection |
 
-Each Deployment has a corresponding ClusterIP Service for in-cluster DNS resolution. PostgreSQL uses a headless Service (`clusterIP: None`) for stable pod DNS (`postgres-0.postgres.hailtrace.svc`).
+Each Deployment has a corresponding ClusterIP Service for in-cluster DNS resolution. PostgreSQL uses a headless Service (`clusterIP: None`) for stable pod DNS (`postgres-0.postgres.storm-data.svc`).
 
 ### Strimzi Operator Pattern
 
 Kafka is managed by the [Strimzi operator](https://strimzi.io/) rather than raw StatefulSets. The operator watches for `Kafka`, `KafkaNodePool`, and `KafkaTopic` custom resources and reconciles the actual Kafka broker pods, storage, and topic configuration.
 
-This replaces the `kafka-init` container from the Docker Compose setup. Previously, an init container ran `kafka-topics.sh --create` on startup to ensure topics existed. Now, topics are declared as `KafkaTopic` CRs in `k8s/base/kafka/`, and Strimzi's entity operator creates and manages them. Adding a topic means adding a YAML file, not modifying a startup script.
+This replaces the `kafka-init` container from the Docker Compose setup. Previously, an init container ran `kafka-topics.sh --create` on startup to ensure topics existed. Now, topics are declared as `KafkaTopic` CRs in `k8s/kafka/`, and Strimzi's entity operator creates and manages them. Adding a topic means adding a YAML file, not modifying a startup script.
 
 The Strimzi-managed Kafka runs in KRaft mode (no ZooKeeper) with a single combined broker/controller node. The bootstrap service is exposed at `kafka-kafka-bootstrap.kafka.svc.cluster.local:9092` -- the naming convention is `{cluster-name}-kafka-bootstrap`.
 
-### Kustomize Base/Overlay Structure
+### Helm Chart Structure
 
-Manifests are organized using [Kustomize](https://kustomize.io/), which is built into kubectl:
+Application manifests are packaged as a Helm chart in `helm/storm-data/`. Each service has a single template file containing its Deployment, Service, ConfigMap, and Secret resources.
 
-- **`k8s/base/`** -- Canonical resource definitions for all hailtrace-namespace workloads. The base `kustomization.yaml` assembles Postgres, application services, monitoring, dashboard, and Kafka UI. Kafka resources (in `k8s/base/kafka/`) are applied separately to the kafka namespace via the Makefile.
+- **`values.yaml`** -- Default configuration shared across environments.
+- **`values-dev.yaml`** -- Dev overrides: local mock-server image with `imagePullPolicy: Never`, loaded into minikube's Docker daemon via `eval $(minikube docker-env)`.
+- **`values-ci.yaml`** -- CI overrides: pins published Docker Hub image tags for the three application services.
 
-- **`k8s/overlays/dev/`** -- Development overlay. Patches the mock-server Deployment to use a locally-built image with `imagePullPolicy: Never`, loaded into minikube's Docker daemon via `eval $(minikube docker-env)`.
+Kafka resources (in `k8s/kafka/`) are applied separately to the kafka namespace via the Makefile, outside the Helm chart. The dashboard HTML ConfigMap is also created by the Makefile before the Helm install, rather than being bundled in the chart.
 
-- **`k8s/overlays/ci/`** -- CI overlay. Pins the three application service images (collector, ETL, API) to their published Docker Hub tags. This is the Kustomize equivalent of the former `compose.ci.yml` override.
-
-The base/overlay split replaces Docker Compose's file override pattern (`docker compose -f compose.yml -f compose.ci.yml`). Environment-specific changes are expressed as Kustomize patches rather than Compose file merges.
+Environment-specific changes are expressed as Helm values file overrides (`helm upgrade --install -f values-dev.yaml`) rather than Kustomize patches.
 
 ## Design Tradeoffs
 

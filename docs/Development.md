@@ -24,7 +24,7 @@ For service-specific development guides:
 ## Repository Layout
 
 ```
-~/Projects/hailtrace/
+storm-data/
   storm-data-collector/       # TypeScript, Confluent Kafka JS, Vitest
   storm-data-etl/             # Go, hexagonal architecture, kafka-go
   storm-data-api/             # Go, gqlgen, pgx, chi
@@ -73,8 +73,8 @@ Once port-forward is running, the dashboard, GraphQL API, Prometheus, and Kafka 
 Common operations:
 
 ```sh
-make apply-apps      # Re-deploy application services (dev overlay)
-make apply-apps-ci   # Re-deploy using published images (CI overlay)
+make apply-apps      # Re-deploy application services (dev values)
+make apply-apps-ci   # Re-deploy using published images (CI values)
 make reset-db        # Truncate storm_reports and restart collector
 make test-e2e        # Reset DB + run E2E tests
 make test-e2e-only   # Run tests against running stack (requires port-forward)
@@ -104,7 +104,7 @@ eval $(minikube docker-env)
 docker build -t brendanvinson/storm-data-api:latest ../storm-data-api
 
 # Restart the deployment to pick up the new image
-kubectl rollout restart deployment/api -n hailtrace
+kubectl rollout restart deployment/api -n storm-data
 ```
 
 ## Useful kubectl Commands
@@ -112,40 +112,40 @@ kubectl rollout restart deployment/api -n hailtrace
 ### Pod status and logs
 
 ```sh
-kubectl get pods -n hailtrace              # App pods
+kubectl get pods -n storm-data              # App pods
 kubectl get pods -n kafka                  # Kafka pods (Strimzi-managed)
 kubectl get pods -A                        # All pods across namespaces
 
-kubectl logs -f deployment/collector -n hailtrace   # Follow collector logs
-kubectl logs -f deployment/etl -n hailtrace         # Follow ETL logs
-kubectl logs -f deployment/api -n hailtrace         # Follow API logs
-kubectl logs -f -l app -n hailtrace --max-log-requests=10  # All app logs
+kubectl logs -f deployment/collector -n storm-data   # Follow collector logs
+kubectl logs -f deployment/etl -n storm-data         # Follow ETL logs
+kubectl logs -f deployment/api -n storm-data         # Follow API logs
+kubectl logs -f -l app -n storm-data --max-log-requests=10  # All app logs
 ```
 
 ### Debugging
 
 ```sh
-kubectl describe pod <pod-name> -n hailtrace   # Events, conditions, mounts
+kubectl describe pod <pod-name> -n storm-data   # Events, conditions, mounts
 kubectl describe kafka/kafka -n kafka          # Strimzi Kafka cluster status
 
-kubectl exec -it -n hailtrace postgres-0 -- psql -U storm -d stormdata
-kubectl exec -it -n hailtrace deployment/api -- sh
+kubectl exec -it -n storm-data postgres-0 -- psql -U storm -d stormdata
+kubectl exec -it -n storm-data deployment/api -- sh
 ```
 
 ### Port forwarding (individual services)
 
 ```sh
-kubectl port-forward -n hailtrace deployment/api 8080:8080
-kubectl port-forward -n hailtrace deployment/dashboard 8000:80
-kubectl port-forward -n hailtrace deployment/prometheus 9090:9090
+kubectl port-forward -n storm-data deployment/api 8080:8080
+kubectl port-forward -n storm-data deployment/dashboard 8000:80
+kubectl port-forward -n storm-data deployment/prometheus 9090:9090
 ```
 
 ### Rolling restarts
 
 ```sh
-kubectl rollout restart deployment/collector -n hailtrace
-kubectl rollout restart deployment/etl -n hailtrace
-kubectl rollout restart deployment/api -n hailtrace
+kubectl rollout restart deployment/collector -n storm-data
+kubectl rollout restart deployment/etl -n storm-data
+kubectl rollout restart deployment/api -n storm-data
 ```
 
 ### Strimzi resources

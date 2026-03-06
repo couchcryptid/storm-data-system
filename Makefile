@@ -1,4 +1,4 @@
-.PHONY: start stop destroy up down clean status logs port-forward \
+.PHONY: start stop destroy up up-ci down down-ci clean status logs port-forward \
         test-e2e test-e2e-only reset-db help \
         install-strimzi apply-infra apply-apps apply-apps-ci build-local
 
@@ -53,6 +53,12 @@ _create-dashboard-configmap:
 
 up: start install-strimzi build-local apply-infra apply-apps ## Full stack from nothing
 	@echo "Stack deployed. Run 'make status' to check pods."
+
+up-ci: ## Start stack via Docker Compose with published images (CI)
+	docker compose -f compose.yml -f compose.ci.yml up -d --wait
+
+down-ci: ## Tear down Docker Compose CI stack
+	docker compose -f compose.yml -f compose.ci.yml down -v --remove-orphans
 
 down: ## Delete all workloads but keep cluster
 	-helm uninstall $(HELM_RELEASE) -n $(NAMESPACE)

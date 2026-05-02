@@ -13,6 +13,7 @@ COPY --from=build /bin/busybox.static /bin/busybox
 COPY --from=build /mock-server /mock-server
 COPY data/ /data/
 
+USER nonroot:nonroot
 EXPOSE 8080
 
 ENTRYPOINT ["/mock-server"]

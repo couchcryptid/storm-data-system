@@ -56,9 +56,12 @@ func main() {
 			return
 		}
 
-		data, err := os.ReadFile(matches[0])
+		// csvType is constrained to "torn"/"hail"/"wind"; glob "*" cannot match path
+		// separators, so matches[0] is bounded to dataDir. No path traversal surface.
+		data, err := os.ReadFile(matches[0]) // #nosec G703
 		if err != nil {
-			log.Printf("error reading %s: %v", matches[0], err)
+			// matches[0] is bounded to dataDir (see above); operator-controlled, not attacker.
+			log.Printf("error reading %q: %v", matches[0], err) // #nosec G706
 			http.Error(w, "fixture not found", http.StatusInternalServerError)
 			return
 		}
@@ -75,8 +78,13 @@ func main() {
 			data = expandTimes(data, fixtureDate)
 		}
 
-		log.Printf("serving %s for request %s", filepath.Base(matches[0]), r.URL.Path)
+		// r.URL.Path is request-controlled but logged via %q (escaped); mock server
+		// is for local dev/CI only — not exposed to untrusted clients in production.
+		log.Printf("serving %q for request %q", filepath.Base(matches[0]), r.URL.Path) // #nosec G706
+		// Source is a local fixture file selected from a hardcoded suffix allowlist;
+		// Content-Type is text/csv (browser does not execute). No XSS surface.
 		w.Header().Set("Content-Type", "text/csv")
+		// nosemgrep: go.lang.security.audit.xss.no-direct-write-to-responsewriter.no-direct-write-to-responsewriter
 		if _, err := w.Write(data); err != nil {
 			log.Printf("error writing response: %v", err)
 		}
@@ -90,7 +98,8 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
-	log.Printf("mock-server listening on %s (data_dir=%s)", addr, dataDir)
+	// addr/dataDir are operator-supplied env vars, not attacker-controlled.
+	log.Printf("mock-server listening on %q (data_dir=%q)", addr, dataDir) // #nosec G706
 	log.Fatal(srv.ListenAndServe())
 }
 
